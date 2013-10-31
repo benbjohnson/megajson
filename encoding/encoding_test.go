@@ -33,3 +33,17 @@ func TestWriteUint(t *testing.T) {
 	WriteUint(&b, uint(1230928137))
 	assert.Equal(t, b.String(), `1230928137`, "")
 }
+
+// Ensures that a true boolean value can be written.
+func TestWriteTrue(t *testing.T) {
+	var b bytes.Buffer
+	WriteBool(&b, true)
+	assert.Equal(t, b.String(), `true`, "")
+}
+
+// Ensures that a false boolean value can be written.
+func TestWriteFalse(t *testing.T) {
+	var b bytes.Buffer
+	WriteBool(&b, false)
+	assert.Equal(t, b.String(), `false`, "")
+}
