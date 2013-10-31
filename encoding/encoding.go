@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"strconv"
 	"unicode/utf8"
 )
 
@@ -61,6 +62,19 @@ func WriteString(w io.Writer, v string) error {
    return nil
 }
 
+// WriteInt encodes and writes an integer to a writer.
+func WriteInt(w io.Writer, v int) error {
+   var b [64]byte
+   _, err := w.Write(strconv.AppendInt(b[:0], int64(v), 10))
+   return err
+}
+
+// WriteUint encodes and writes an unsigned integer to a writer.
+func WriteUint(w io.Writer, v uint) error {
+   var b [64]byte
+   _, err := w.Write(strconv.AppendUint(b[:0], uint64(v), 10))
+   return err
+}
 
 // writeByte writes a single byte to the writer.
 func writeByte(w io.Writer, c byte) error {
