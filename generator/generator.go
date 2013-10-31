@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"io"
 )
 
@@ -23,25 +24,34 @@ func GenerateEncoder(pkg string, typeSpec *ast.TypeSpec, w io.Writer) error {
 	for _, f := range typ.Fields.List {
 		if ident, ok := f.Type.(*ast.Ident); ok {
 			switch ident.Name {
-			case "string":
+			case "string", "int":
 				fields = append(fields, f)
 			}
 		}
 	}
 
 	// Generate the encoder.
-	fmt.Fprintf(&b, "package %s\n\n", pkg)
-	fmt.Fprintf(&b, "import \"io\"\n\n")
-	fmt.Fprintf(&b, "type %sJSONEncoder {\n", name)
-	fmt.Fprintf(&b, "\tw io.Writer\n")
-	fmt.Fprintf(&b, "}\n\n")
+	fmt.Fprintf(&b, "package %s\n", pkg)
+	fmt.Fprintln(&b, "import \"io\"")
+	fmt.Fprintln(&b, "import \"github.com/benbjohnson/megajson/encoding\"")
+	fmt.Fprintf(&b, "type %sJSONEncoder struct {", name)
+	fmt.Fprintln(&b, "w io.Writer")
+	fmt.Fprintln(&b, "}")
 
 	fmt.Fprintf(&b, "func (e *%sJSONEncoder) Encode(v *%s) error {\n", name, name)
 	for _, f := range fields {
 		if ident, ok := f.Type.(*ast.Ident); ok {
+			name := f.Names[0]
+
 			switch ident.Name {
-			case "string":
-				fmt.Fprintf(&b, "\tif _, err := io.WriteString(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", f.Names[0])
+            case "string":
+                fmt.Fprintf(&b, "\tif _, err := encoding.WriteString(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+            case "int":
+                fmt.Fprintf(&b, "\tif _, err := encoding.WriteInt(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+            case "uint":
+                fmt.Fprintf(&b, "\tif _, err := encoding.WriteUint(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+            case "bool":
+                fmt.Fprintf(&b, "\tif _, err := encoding.WriteBool(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
 			}
 		}
 	}
@@ -49,10 +59,20 @@ func GenerateEncoder(pkg string, typeSpec *ast.TypeSpec, w io.Writer) error {
 	fmt.Fprintf(&b, "}\n")
 
 	// Debugging
+	fmt.Println(">>>>>>>>>>> DEBUG >>>>>>>>>>>")
 	fmt.Println(b.String())
+	fmt.Println("<<<<<<<<<<< DEBUG <<<<<<<<<<<")
+	fmt.Println("")
+
+	// Format source.
+	bfmt, err := format.Source(b.Bytes());
+	if err != nil {
+		fmt.Println("ERR: ", err)
+		return err
+	}
 
 	// Write to output stream.
-	if _, err := w.Write(b.Bytes()); err != nil {
+	if _, err := w.Write(bfmt); err != nil {
 		return err
 	}
 
