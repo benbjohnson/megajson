@@ -20,6 +20,17 @@ func TestWriteBlankString(t *testing.T) {
 	assert.Equal(t, b.String(), `""`, "")
 }
 
+func BenchmarkWriteRawBytes(b *testing.B) {
+	s := "hello, world"
+	var w bytes.Buffer
+	for i := 0; i < b.N; i++ {
+		if _, err := w.Write([]byte(s)); err != nil {
+			b.Fatal("WriteRawBytes:", err)
+		}
+	}
+	b.SetBytes(int64(len(s)))
+}
+
 func BenchmarkWriteString(b *testing.B) {
 	s := "hello, world"
 	var w bytes.Buffer
