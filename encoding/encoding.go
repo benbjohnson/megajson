@@ -13,7 +13,14 @@ var hex = "0123456789abcdef"
 // WriteString writes a JSON string to the writer. JSON encoding used
 // from the encoding/json package.
 func WriteString(w io.Writer, v string) error {
-	var buf bytes.Buffer
+   var buf bytes.Buffer
+   return WriteStringWithBuffer(w, v, &buf)
+}
+
+// WriteString writes a JSON string to the writer. JSON encoding used
+// from the encoding/json package.
+func WriteStringWithBuffer(w io.Writer, v string, buf *bytes.Buffer) error {
+   buf.Reset()
 	buf.WriteByte('"')
 	prev := 0
 	for i := 0; i < len(v); {

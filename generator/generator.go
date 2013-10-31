@@ -50,6 +50,10 @@ func GenerateEncoder(pkg string, typeSpec *ast.TypeSpec, w io.Writer) error {
                 fmt.Fprintf(&b, "\tif _, err := encoding.WriteInt(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
             case "uint":
                 fmt.Fprintf(&b, "\tif _, err := encoding.WriteUint(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+            case "float32":
+                fmt.Fprintf(&b, "\tif _, err := encoding.WriteFloat32(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+            case "float64":
+                fmt.Fprintf(&b, "\tif _, err := encoding.WriteFloat64(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
             case "bool":
                 fmt.Fprintf(&b, "\tif _, err := encoding.WriteBool(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
 			}
@@ -58,20 +62,13 @@ func GenerateEncoder(pkg string, typeSpec *ast.TypeSpec, w io.Writer) error {
 	fmt.Fprintf(&b, "\treturn nil\n")
 	fmt.Fprintf(&b, "}\n")
 
-	// Debugging
-	fmt.Println(">>>>>>>>>>> DEBUG >>>>>>>>>>>")
-	fmt.Println(b.String())
-	fmt.Println("<<<<<<<<<<< DEBUG <<<<<<<<<<<")
-	fmt.Println("")
-
 	// Format source.
 	bfmt, err := format.Source(b.Bytes());
 	if err != nil {
-		fmt.Println("ERR: ", err)
 		return err
 	}
 
-	// Write to output stream.
+	// Write to formatted output stream.
 	if _, err := w.Write(bfmt); err != nil {
 		return err
 	}
