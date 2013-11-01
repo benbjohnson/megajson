@@ -11,6 +11,7 @@ Go's builtin JSON support works great to provide simple, runtime JSON encoding a
 However, it's based on reflection so it has a few drawbacks:
 
 * *Performance* - The reflection library is slow and cannot be optimized by the compiler at compile time.
+
 * *Public Fields Only* - The reflection library can only reflect on exported fields. That means that you can't marshal private fields to JSON.
 
 Megajson is built to get around some of these limitations.
