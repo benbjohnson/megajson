@@ -7,21 +7,6 @@ import (
 	"testing"
 )
 
-type codeResponse struct {
-	Tree     *codeNode `json:"tree"`
-	Username string    `json:"username"`
-}
-
-type codeNode struct {
-	Name     string      `json:"name"`
-	Kids     []*codeNode `json:"kids"`
-	CLWeight float64     `json:"cl_weight"`
-	Touches  int         `json:"touches"`
-	MinT     int64       `json:"min_t"`
-	MaxT     int64       `json:"max_t"`
-	MeanT    int64       `json:"mean_t"`
-}
-
 var codeJSON []byte
 var codeStruct codeResponse
 
@@ -72,7 +57,7 @@ func BenchmarkCodeEncoder(b *testing.B) {
 		codeInit()
 		b.StartTimer()
 	}
-	enc := NewcodeResponseEncoder(ioutil.Discard)
+	enc := NewcodeResponseJSONEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
 		if err := enc.Encode(&codeStruct); err != nil {
 			b.Fatal("Encode:", err)
