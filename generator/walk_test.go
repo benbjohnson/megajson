@@ -18,7 +18,6 @@ func TestGeneratorWalkSimpleEncoder(t *testing.T) {
 		assert.Nil(t, err, "")
 
 		// Shell to `go run encode.go`.
-		fmt.Println(path)
 		files, _ := filepath.Glob(filepath.Join(path, "*"))
 		args := []string{"run"}
 		args = append(args, files...)
@@ -35,9 +34,9 @@ func TestGeneratorWalkSimpleEncoder(t *testing.T) {
 func withFixture(name string, fn func(string)) {
 	path, _ := ioutil.TempDir("", "")
 	os.RemoveAll(path)
-	// defer os.RemoveAll(path)
+	defer os.RemoveAll(path)
 
-	src, _ := filepath.Abs("../.fixtures/" + name)
+	src, _ := filepath.Abs("../test/.fixtures/" + name)
 	mustRun("cp", "-r", src, path)
 	fn(path)
 }
