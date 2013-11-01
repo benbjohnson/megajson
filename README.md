@@ -1,3 +1,5 @@
+### (This project is currently under development)
+
 # megajson
 
 > High performance Go JSON encoder and decoder.
