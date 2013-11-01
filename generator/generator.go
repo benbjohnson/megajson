@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
-	"go/format"
 	"io"
 )
 
 // Generates a parser for a single Go AST type.
-func GenerateEncoder(pkg string, typeSpec *ast.TypeSpec, w io.Writer) error {
+func GenerateEncoder(typeSpec *ast.TypeSpec, w io.Writer) error {
 	var b bytes.Buffer
 	name := typeSpec.Name.Name
 
@@ -31,12 +30,15 @@ func GenerateEncoder(pkg string, typeSpec *ast.TypeSpec, w io.Writer) error {
 	}
 
 	// Generate the encoder.
-	fmt.Fprintf(&b, "package %s\n", pkg)
-	fmt.Fprintln(&b, "import \"io\"")
-	fmt.Fprintln(&b, "import \"github.com/benbjohnson/megajson/encoding\"")
 	fmt.Fprintf(&b, "type %sJSONEncoder struct {", name)
 	fmt.Fprintln(&b, "w io.Writer")
 	fmt.Fprintln(&b, "}")
+
+	// Generate the constructor.
+	fmt.Fprintf(&b, "func New%sJSONEncoder(w io.Writer) *%sJSONEncoder {\n", name, name)
+	fmt.Fprintf(&b, "return &%sJSONEncoder{w: w}\n", name)
+	fmt.Fprintln(&b, "}")
+	fmt.Fprintln(&b, "")
 
 	fmt.Fprintf(&b, "func (e *%sJSONEncoder) Encode(v *%s) error {\n", name, name)
 	for _, f := range fields {
@@ -45,31 +47,25 @@ func GenerateEncoder(pkg string, typeSpec *ast.TypeSpec, w io.Writer) error {
 
 			switch ident.Name {
             case "string":
-                fmt.Fprintf(&b, "\tif _, err := encoding.WriteString(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+                fmt.Fprintf(&b, "\tif err := encoding.WriteString(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
             case "int":
-                fmt.Fprintf(&b, "\tif _, err := encoding.WriteInt(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+                fmt.Fprintf(&b, "\tif err := encoding.WriteInt(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
             case "uint":
-                fmt.Fprintf(&b, "\tif _, err := encoding.WriteUint(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+                fmt.Fprintf(&b, "\tif err := encoding.WriteUint(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
             case "float32":
-                fmt.Fprintf(&b, "\tif _, err := encoding.WriteFloat32(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+                fmt.Fprintf(&b, "\tif err := encoding.WriteFloat32(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
             case "float64":
-                fmt.Fprintf(&b, "\tif _, err := encoding.WriteFloat64(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+                fmt.Fprintf(&b, "\tif err := encoding.WriteFloat64(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
             case "bool":
-                fmt.Fprintf(&b, "\tif _, err := encoding.WriteBool(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+                fmt.Fprintf(&b, "\tif err := encoding.WriteBool(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
 			}
 		}
 	}
 	fmt.Fprintf(&b, "\treturn nil\n")
 	fmt.Fprintf(&b, "}\n")
 
-	// Format source.
-	bfmt, err := format.Source(b.Bytes());
-	if err != nil {
-		return err
-	}
-
 	// Write to formatted output stream.
-	if _, err := w.Write(bfmt); err != nil {
+	if _, err := b.WriteTo(w); err != nil {
 		return err
 	}
 

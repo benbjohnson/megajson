@@ -9,7 +9,8 @@ import (
 	"testing"
 )
 
-func TestGeneratorGenerate(t *testing.T) {
+// Ensures a basic sanity check when generating the encoder.
+func TestGeneratorGenerateEncoder(t *testing.T) {
 	var b bytes.Buffer
 	src := `
 package foo
@@ -19,6 +20,6 @@ type Foo struct {
 }
 `
 	f, _ := parser.ParseFile(token.NewFileSet(), "foo.go", src, 0)
-	err := GenerateEncoder("foo", f.Decls[0].(*ast.GenDecl).Specs[0].(*ast.TypeSpec), &b)
+	err := GenerateEncoder(f.Decls[0].(*ast.GenDecl).Specs[0].(*ast.TypeSpec), &b)
 	assert.Nil(t, err)
 }

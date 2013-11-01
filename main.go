@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"log"
-	"os"
+
+	"github.com/benbjohnson/megajson/generator"
 )
 
 func init() {
@@ -13,24 +14,15 @@ func init() {
 func main() {
 	flag.Parse()
 	if flag.NArg() == 0 {
-
+		usage()
 	}
 
-	// Open the provided path.
 	path := flag.Arg(0)
-	f, err := os.Open(path)
-	if err != nil {
+	if err := generator.Walk(path); err != nil {
 		log.Fatalln(err)
 	}
-	defer f.Close()
-
-	// Process the AST and generate a parser.
-	//g := generator.NewDirGenerator()
-	//err := g.Generate(path)
-	//source.Codegen()
 }
 
-// Prints the CLI usage.
 func usage() {
 	log.Fatal("usage: megajson OPTIONS FILE")
 }
