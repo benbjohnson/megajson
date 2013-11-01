@@ -38,24 +38,31 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '{'); err != nil {\nreturn err\n}\n")
 
 	index := 0
-	for _, f := range structType.Fields.List {
-		for _, name := range f.Names {
-			if index > 0 {
-				fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, ','); err != nil {\nreturn err\n}\n")
-			}
+	for _, field := range structType.Fields.List {
+		for _, name := range field.Names {
+			// Write to a temporary buffer to check if anything is written.
+			var buf bytes.Buffer
+			if err := writeFieldEncoding(&buf, name.Name, field); buf.Len() > 0 {
+				// Write separating comma after the first field.
+				if index > 0 {
+					fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, ','); err != nil {\nreturn err\n}\n")
+				}
 
-			if err := writeFieldEncoding(&b, name.Name, f); err == nil {
+				// Copy over to main buffer.
+				buf.WriteTo(&b)
 				index++
-			} else if err != unsupportedTypeError {
+				
+			} else if err != nil && err != unsupportedTypeError {
 				return err
 			}
 		}
 	}
+
 	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '}'); err != nil {\nreturn err\n}\n")
 	fmt.Fprintf(&b, "return nil\n")
 	fmt.Fprintf(&b, "}\n")
 
-	// Write to formatted output stream.
+	// Copy buffer to writer.
 	if _, err := b.WriteTo(w); err != nil {
 		return err
 	}
@@ -73,6 +80,7 @@ func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", name)
 	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
 
+	fmt.Println("type:", name, "=", typ.Name)
 	switch typ.Name {
 	case "string":
 		fmt.Fprintf(w, "if err := encoding.WriteString(e.w, v.%s); err != nil {\nreturn err\n}\n", name)

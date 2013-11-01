@@ -17,9 +17,6 @@ func (e *codeResponseJSONEncoder) Encode(v *codeResponse) error {
 	if err := encoding.WriteByte(e.w, '{'); err != nil {
 		return err
 	}
-	if err := encoding.WriteByte(e.w, ','); err != nil {
-		return err
-	}
 	if err := encoding.WriteString(e.w, "Username"); err != nil {
 		return err
 	}
@@ -54,9 +51,6 @@ func (e *codeNodeJSONEncoder) Encode(v *codeNode) error {
 		return err
 	}
 	if err := encoding.WriteString(e.w, v.Name); err != nil {
-		return err
-	}
-	if err := encoding.WriteByte(e.w, ','); err != nil {
 		return err
 	}
 	if err := encoding.WriteByte(e.w, ','); err != nil {

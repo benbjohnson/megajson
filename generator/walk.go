@@ -55,13 +55,15 @@ func Walk(root string) error {
 			return nil
 		}
 
-		fmt.Println(">>>>\n", b.String(), "\n<<<<<")
+		// fmt.Println(">>>>\n", b.String(), "\n<<<<<")
 
 		// Format source.
 		bfmt, err := format.Source(b.Bytes())
 		if err != nil {
 			return err
 		}
+
+		fmt.Println(">>>>\n", string(bfmt), "\n<<<<<")
 
 		// Write to output file.
 		if err := ioutil.WriteFile(extregexp.ReplaceAllString(path, "_encoder.go"), bfmt, info.Mode()); err != nil {
