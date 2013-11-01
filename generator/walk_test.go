@@ -2,12 +2,12 @@ package generator
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
 
 // Ensures that a simple struct can be encoded to JSON.
@@ -27,10 +27,9 @@ func TestGeneratorWalkSimpleEncoder(t *testing.T) {
 
 		// Verify output.
 		assert.Nil(t, err, "")
-		assert.Equal(t, string(out), `{"name":"","age":0}`, "")
+		assert.Equal(t, string(out), `{"Name":"","Age":0}`, "")
 	})
 }
-
 
 // Sets up a Go project using a given fixture directory.
 func withFixture(name string, fn func(string)) {

@@ -2,8 +2,8 @@ package encoding
 
 import (
 	"bytes"
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 // Ensures that a string can be escaped and encoded.
@@ -54,8 +54,6 @@ func BenchmarkWriteStringReuseBuffer(b *testing.B) {
 	b.SetBytes(int64(len(s)))
 }
 
-
-
 // Ensures that an int can be written.
 func TestWriteInt(t *testing.T) {
 	var b bytes.Buffer
@@ -73,8 +71,6 @@ func BenchmarkWriteInt(b *testing.B) {
 	}
 	b.SetBytes(int64(len("-3")))
 }
-
-
 
 // Ensures that a uint can be written.
 func TestWriteUint(t *testing.T) {
@@ -94,8 +90,6 @@ func BenchmarkWriteUint(b *testing.B) {
 	b.SetBytes(int64(len("30")))
 }
 
-
-
 // Ensures that a float32 can be written.
 func TestWriteFloat32(t *testing.T) {
 	var b bytes.Buffer
@@ -113,7 +107,6 @@ func BenchmarkWriteFloat32(b *testing.B) {
 	}
 	b.SetBytes(int64(len("2319.1921")))
 }
-
 
 // Ensures that a float64 can be written.
 func TestWriteFloat64(t *testing.T) {
@@ -133,7 +126,6 @@ func BenchmarkWriteFloat64(b *testing.B) {
 	b.SetBytes(int64(len(`2.319123192191827e+06`)))
 }
 
-
 // Ensures that a true boolean value can be written.
 func TestWriteTrue(t *testing.T) {
 	var b bytes.Buffer
@@ -147,7 +139,6 @@ func TestWriteFalse(t *testing.T) {
 	WriteBool(&b, false)
 	assert.Equal(t, b.String(), `false`, "")
 }
-
 
 func BenchmarkWriteBool(b *testing.B) {
 	var w bytes.Buffer

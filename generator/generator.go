@@ -41,27 +41,41 @@ func GenerateEncoder(typeSpec *ast.TypeSpec, w io.Writer) error {
 	fmt.Fprintln(&b, "")
 
 	fmt.Fprintf(&b, "func (e *%sJSONEncoder) Encode(v *%s) error {\n", name, name)
+	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '{'); err != nil {\nreturn err\n}\n")
+
+	index := 0
 	for _, f := range fields {
 		if ident, ok := f.Type.(*ast.Ident); ok {
 			name := f.Names[0]
 
+			if index > 0 {
+				fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, ','); err != nil {\nreturn err\n}\n")
+			}
+
+			fmt.Fprintf(&b, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", name)
+			fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
+
+			index++
 			switch ident.Name {
-            case "string":
-                fmt.Fprintf(&b, "\tif err := encoding.WriteString(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
-            case "int":
-                fmt.Fprintf(&b, "\tif err := encoding.WriteInt(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
-            case "uint":
-                fmt.Fprintf(&b, "\tif err := encoding.WriteUint(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
-            case "float32":
-                fmt.Fprintf(&b, "\tif err := encoding.WriteFloat32(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
-            case "float64":
-                fmt.Fprintf(&b, "\tif err := encoding.WriteFloat64(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
-            case "bool":
-                fmt.Fprintf(&b, "\tif err := encoding.WriteBool(e.w, v.%s); err != nil {\n\t\treturn err\n\t}\n", name)
+			case "string":
+				fmt.Fprintf(&b, "if err := encoding.WriteString(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
+			case "int":
+				fmt.Fprintf(&b, "if err := encoding.WriteInt(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
+			case "uint":
+				fmt.Fprintf(&b, "if err := encoding.WriteUint(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
+			case "float32":
+				fmt.Fprintf(&b, "if err := encoding.WriteFloat32(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
+			case "float64":
+				fmt.Fprintf(&b, "if err := encoding.WriteFloat64(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
+			case "bool":
+				fmt.Fprintf(&b, "if err := encoding.WriteBool(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
+			default:
+				index--
 			}
 		}
 	}
-	fmt.Fprintf(&b, "\treturn nil\n")
+	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '}'); err != nil {\nreturn err\n}\n")
+	fmt.Fprintf(&b, "return nil\n")
 	fmt.Fprintf(&b, "}\n")
 
 	// Write to formatted output stream.

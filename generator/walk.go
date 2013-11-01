@@ -8,8 +8,8 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"regexp"
 )
 
@@ -57,7 +57,7 @@ func Walk(root string) error {
 		}
 
 		// Format source.
-		bfmt, err := format.Source(b.Bytes());
+		bfmt, err := format.Source(b.Bytes())
 		if err != nil {
 			return err
 		}

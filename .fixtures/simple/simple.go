@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 )
@@ -12,5 +11,4 @@ func main() {
 	if err := e.Encode(s); err != nil {
 		log.Fatalln("MyStruct encoding error: ", err.Error())
 	}
-	fmt.Println("")
 }
