@@ -12,14 +12,14 @@ import (
 func TestWriteInt(t *testing.T) {
 	var b bytes.Buffer
 	WriteInt(&b, -100)
-	assert.Equal(t, b.String(), `-100`, "")
+	assert.Equal(t, b.String(), `-100`)
 }
 
 // Ensures that a uint can be written.
 func TestWriteUint(t *testing.T) {
 	var b bytes.Buffer
 	WriteUint(&b, uint(1230928137))
-	assert.Equal(t, b.String(), `1230928137`, "")
+	assert.Equal(t, b.String(), `1230928137`)
 }
 
 

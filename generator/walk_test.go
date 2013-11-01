@@ -15,7 +15,7 @@ func TestGeneratorWalkSimpleEncoder(t *testing.T) {
 	withFixture("simple", func(path string) {
 		// Generate encoder.
 		err := Walk(path)
-		assert.Nil(t, err, "")
+		assert.NoError(t, err)
 
 		// Shell to `go run encode.go`.
 		files, _ := filepath.Glob(filepath.Join(path, "*"))
@@ -25,8 +25,8 @@ func TestGeneratorWalkSimpleEncoder(t *testing.T) {
 		out, _ := c.Output()
 
 		// Verify output.
-		assert.Nil(t, err, "")
-		assert.Equal(t, string(out), `{"Name":"","Age":0}`, "")
+		assert.NoError(t, err)
+		assert.Equal(t, string(out), `{"Name":"","Age":0}`)
 	})
 }
 

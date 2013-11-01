@@ -40,9 +40,8 @@ func Walk(root string) error {
 			if decl, ok := decl.(*ast.GenDecl); ok {
 				for _, spec := range decl.Specs {
 					if spec, ok := spec.(*ast.TypeSpec); ok {
-						err = GenerateEncoder(spec, &b)
+						err = writeTypeEncoder(&b, spec)
 						if err != nil {
-							fmt.Println("ERROR: ", err.Error())
 							return err
 						}
 						encoded = true
@@ -55,6 +54,8 @@ func Walk(root string) error {
 		if !encoded {
 			return nil
 		}
+
+		fmt.Println(">>>>\n", b.String(), "\n<<<<<")
 
 		// Format source.
 		bfmt, err := format.Source(b.Bytes())

@@ -11,14 +11,14 @@ import (
 func TestWriteTrue(t *testing.T) {
 	var b bytes.Buffer
 	WriteBool(&b, true)
-	assert.Equal(t, b.String(), `true`, "")
+	assert.Equal(t, b.String(), `true`)
 }
 
 // Ensures that a false boolean value can be written.
 func TestWriteFalse(t *testing.T) {
 	var b bytes.Buffer
 	WriteBool(&b, false)
-	assert.Equal(t, b.String(), `false`, "")
+	assert.Equal(t, b.String(), `false`)
 }
 
 

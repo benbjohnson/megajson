@@ -11,14 +11,14 @@ import (
 func TestWriteFloat32(t *testing.T) {
 	var b bytes.Buffer
 	WriteFloat32(&b, float32(2319.1921))
-	assert.Equal(t, b.String(), `2319.1921`, "")
+	assert.Equal(t, b.String(), `2319.1921`)
 }
 
 // Ensures that a float64 can be written.
 func TestWriteFloat64(t *testing.T) {
 	var b bytes.Buffer
 	WriteFloat64(&b, 2319123.1921918273)
-	assert.Equal(t, b.String(), `2.319123192191827e+06`, "")
+	assert.Equal(t, b.String(), `2.319123192191827e+06`)
 }
 
 

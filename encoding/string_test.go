@@ -11,14 +11,14 @@ import (
 func TestWriteString(t *testing.T) {
 	var b bytes.Buffer
 	WriteString(&b, "foo\n\"")
-	assert.Equal(t, b.String(), `"foo\n\""`, "")
+	assert.Equal(t, b.String(), `"foo\n\""`)
 }
 
 // Ensures that a blank string can be encoded.
 func TestWriteBlankString(t *testing.T) {
 	var b bytes.Buffer
 	WriteString(&b, "")
-	assert.Equal(t, b.String(), `""`, "")
+	assert.Equal(t, b.String(), `""`)
 }
 
 
