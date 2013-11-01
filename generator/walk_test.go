@@ -26,7 +26,7 @@ func TestGeneratorWalkSimpleEncoder(t *testing.T) {
 
 		// Verify output.
 		assert.NoError(t, err)
-		assert.Equal(t, string(out), `{"Name":"","Age":0}`)
+		assert.Equal(t, string(out), `{"StringX":"foo","IntX":200,"Int64X":189273,"UintX":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`)
 	})
 }
 

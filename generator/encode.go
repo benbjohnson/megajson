@@ -72,22 +72,35 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 
 // writeFieldEncoding generates the encoder code for a single field.
 func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
-	typ, ok := f.Type.(*ast.Ident)
-	if !ok {
-		return nil
-	}
-
 	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", name)
 	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
 
-	fmt.Println("type:", name, "=", typ.Name)
+	switch f.Type.(type) {
+	case *ast.Ident:
+		return writePrimativeFieldEncoding(w, name, f)
+	case *ast.StarExpr:
+		return writePointerFieldEncoding(w, name, f)
+	case *ast.ArrayType:
+		fmt.Println("ARRAY!")
+	}
+	return unsupportedTypeError
+}
+
+// writeFieldEncoding generates the encoder code for a single primative field.
+func writePrimativeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
+	typ := f.Type.(*ast.Ident)
+
 	switch typ.Name {
 	case "string":
 		fmt.Fprintf(w, "if err := encoding.WriteString(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
 	case "int":
 		fmt.Fprintf(w, "if err := encoding.WriteInt(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
+	case "int64":
+		fmt.Fprintf(w, "if err := encoding.WriteInt64(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
 	case "uint":
 		fmt.Fprintf(w, "if err := encoding.WriteUint(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
+	case "uint64":
+		fmt.Fprintf(w, "if err := encoding.WriteUint64(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
 	case "float32":
 		fmt.Fprintf(w, "if err := encoding.WriteFloat32(e.w, v.%s); err != nil {\nreturn err\n}\n", name)
 	case "float64":
@@ -98,5 +111,17 @@ func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 		return unsupportedTypeError
 	}
 
+	return nil
+}
+
+// writePointerFieldEncoding generates the encoding code for a single field with a pointer type.
+func writePointerFieldEncoding(w io.Writer, name string, f *ast.Field) error {
+	typ := f.Type.(*ast.StarExpr)
+	x, ok := typ.X.(*ast.Ident)
+	if !ok {
+		return unsupportedTypeError
+	}
+
+	fmt.Fprintf(w, "if err := New%sJSONEncoder(e.w).Encode(v.%s); err != nil {\nreturn err\n}\n", x.Name, name)
 	return nil
 }

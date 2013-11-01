@@ -17,6 +17,18 @@ func (e *codeResponseJSONEncoder) Encode(v *codeResponse) error {
 	if err := encoding.WriteByte(e.w, '{'); err != nil {
 		return err
 	}
+	if err := encoding.WriteString(e.w, "Tree"); err != nil {
+		return err
+	}
+	if err := encoding.WriteByte(e.w, ':'); err != nil {
+		return err
+	}
+	if err := NewcodeNodeJSONEncoder(e.w).Encode(v.Tree); err != nil {
+		return err
+	}
+	if err := encoding.WriteByte(e.w, ','); err != nil {
+		return err
+	}
 	if err := encoding.WriteString(e.w, "Username"); err != nil {
 		return err
 	}
@@ -56,6 +68,15 @@ func (e *codeNodeJSONEncoder) Encode(v *codeNode) error {
 	if err := encoding.WriteByte(e.w, ','); err != nil {
 		return err
 	}
+	if err := encoding.WriteString(e.w, "Kids"); err != nil {
+		return err
+	}
+	if err := encoding.WriteByte(e.w, ':'); err != nil {
+		return err
+	}
+	if err := encoding.WriteByte(e.w, ','); err != nil {
+		return err
+	}
 	if err := encoding.WriteString(e.w, "CLWeight"); err != nil {
 		return err
 	}
@@ -86,6 +107,9 @@ func (e *codeNodeJSONEncoder) Encode(v *codeNode) error {
 	if err := encoding.WriteByte(e.w, ':'); err != nil {
 		return err
 	}
+	if err := encoding.WriteInt64(e.w, v.MinT); err != nil {
+		return err
+	}
 	if err := encoding.WriteByte(e.w, ','); err != nil {
 		return err
 	}
@@ -95,6 +119,9 @@ func (e *codeNodeJSONEncoder) Encode(v *codeNode) error {
 	if err := encoding.WriteByte(e.w, ':'); err != nil {
 		return err
 	}
+	if err := encoding.WriteInt64(e.w, v.MaxT); err != nil {
+		return err
+	}
 	if err := encoding.WriteByte(e.w, ','); err != nil {
 		return err
 	}
@@ -102,6 +129,9 @@ func (e *codeNodeJSONEncoder) Encode(v *codeNode) error {
 		return err
 	}
 	if err := encoding.WriteByte(e.w, ':'); err != nil {
+		return err
+	}
+	if err := encoding.WriteInt64(e.w, v.MeanT); err != nil {
 		return err
 	}
 	if err := encoding.WriteByte(e.w, '}'); err != nil {
