@@ -30,6 +30,26 @@ func TestGeneratorWalkSimpleEncoder(t *testing.T) {
 	})
 }
 
+// Ensures that a nested struct can be encoded to JSON.
+func TestGeneratorWalkNestedEncoder(t *testing.T) {
+	withFixture("nested", func(path string) {
+		// Generate encoder.
+		err := Walk(path)
+		assert.NoError(t, err)
+
+		// Shell to `go run encode.go`.
+		files, _ := filepath.Glob(filepath.Join(path, "*"))
+		args := []string{"run"}
+		args = append(args, files...)
+		c := exec.Command("go", args...)
+		out, _ := c.Output()
+
+		// Verify output.
+		assert.NoError(t, err)
+		assert.Equal(t, string(out), `{"StringX":"foo","BX":{"Name":"John","Age":20}}`)
+	})
+}
+
 // Sets up a Go project using a given fixture directory.
 func withFixture(name string, fn func(string)) {
 	path, _ := ioutil.TempDir("", "")
