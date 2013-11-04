@@ -12,6 +12,7 @@ func main() {
 			Name: "John",
 			Age: 20,
 		},
+		BY: nil,
 	}
 	e := NewAJSONEncoder(os.Stdout)
 	if err := e.Encode(obj); err != nil {

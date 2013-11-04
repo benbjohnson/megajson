@@ -46,7 +46,7 @@ func TestGeneratorWalkNestedEncoder(t *testing.T) {
 
 		// Verify output.
 		assert.NoError(t, err)
-		assert.Equal(t, string(out), `{"StringX":"foo","BX":{"Name":"John","Age":20}}`)
+		assert.Equal(t, string(out), `{"StringX":"foo","BX":{"Name":"John","Age":20},"BY":null}`)
 	})
 }
 

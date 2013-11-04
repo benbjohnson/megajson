@@ -35,6 +35,8 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 
 	// Generate the encode function.
 	fmt.Fprintf(&b, "func (e *%sJSONEncoder) Encode(v *%s) error {\n", name, name)
+	fmt.Fprintf(&b, "if v == nil {\nreturn encoding.WriteBytes(e.w, []byte(`null`))\n}\n\n")
+
 	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '{'); err != nil {\nreturn err\n}\n")
 
 	index := 0
