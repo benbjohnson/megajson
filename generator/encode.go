@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"go/ast"
 	"io"
+	"reflect"
 )
 
 // Used for marking fields as not written. Not actually returned to user.
 var unsupportedTypeError = errors.New("Unsupported type")
+var ignoreFieldError = errors.New("Ignore field")
 
 // GenerateTypeEncoder generates a struct for a single Type.
 func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
@@ -54,7 +56,7 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 				buf.WriteTo(&b)
 				index++
 
-			} else if err != nil && err != unsupportedTypeError {
+			} else if err != nil && err != unsupportedTypeError && err != ignoreFieldError {
 				return err
 			}
 		}
@@ -74,14 +76,22 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 
 // writeFieldEncoding generates the encoder code for a single field.
 func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
-	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", name)
-	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
+	var tag string
+	if f.Tag != nil {
+		tag = f.Tag.Value[1:len(f.Tag.Value)-1]
+		tag = reflect.StructTag(tag).Get("json")
+	}
+
+	// Ignore field.
+	if len(tag) > 0 && tag[0] == '-' {
+		return ignoreFieldError
+	}
 
 	switch f.Type.(type) {
 	case *ast.Ident:
-		return writePrimativeFieldEncoding(w, name, f)
+		return writePrimativeFieldEncoding(w, name, f, tag)
 	case *ast.StarExpr:
-		return writePointerFieldEncoding(w, name, f)
+		return writePointerFieldEncoding(w, name, f, tag)
 	case *ast.ArrayType:
 		fmt.Println("ARRAY!")
 	}
@@ -89,8 +99,11 @@ func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 }
 
 // writeFieldEncoding generates the encoder code for a single primative field.
-func writePrimativeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
+func writePrimativeFieldEncoding(w io.Writer, name string, f *ast.Field, tag string) error {
 	typ := f.Type.(*ast.Ident)
+
+	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", name)
+	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
 
 	switch typ.Name {
 	case "string":
@@ -117,13 +130,15 @@ func writePrimativeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 }
 
 // writePointerFieldEncoding generates the encoding code for a single field with a pointer type.
-func writePointerFieldEncoding(w io.Writer, name string, f *ast.Field) error {
+func writePointerFieldEncoding(w io.Writer, name string, f *ast.Field, tag string) error {
 	typ := f.Type.(*ast.StarExpr)
 	x, ok := typ.X.(*ast.Ident)
 	if !ok {
 		return unsupportedTypeError
 	}
 
+	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", name)
+	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
 	fmt.Fprintf(w, "if err := New%sJSONEncoder(e.w).Encode(v.%s); err != nil {\nreturn err\n}\n", x.Name, name)
 	return nil
 }
