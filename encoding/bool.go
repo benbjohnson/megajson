@@ -14,4 +14,3 @@ func WriteBool(w io.Writer, v bool) error {
 		return err
 	}
 }
-

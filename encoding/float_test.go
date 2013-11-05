@@ -21,7 +21,6 @@ func TestWriteFloat64(t *testing.T) {
 	assert.Equal(t, b.String(), `2.319123192191827e+06`)
 }
 
-
 func BenchmarkWriteFloat32(b *testing.B) {
 	v := float32(2319.1921)
 	var w bytes.Buffer

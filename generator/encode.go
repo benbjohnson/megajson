@@ -53,7 +53,7 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 				// Copy over to main buffer.
 				buf.WriteTo(&b)
 				index++
-				
+
 			} else if err != nil && err != unsupportedTypeError {
 				return err
 			}

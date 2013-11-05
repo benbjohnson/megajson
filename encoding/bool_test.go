@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-
 // Ensures that a true boolean value can be written.
 func TestWriteTrue(t *testing.T) {
 	var b bytes.Buffer
@@ -20,7 +19,6 @@ func TestWriteFalse(t *testing.T) {
 	WriteBool(&b, false)
 	assert.Equal(t, b.String(), `false`)
 }
-
 
 func BenchmarkWriteBool(b *testing.B) {
 	var w bytes.Buffer

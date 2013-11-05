@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 // Ensures that an int can be written.
 func TestWriteInt(t *testing.T) {
 	var b bytes.Buffer
@@ -21,7 +20,6 @@ func TestWriteUint(t *testing.T) {
 	WriteUint(&b, uint(1230928137))
 	assert.Equal(t, b.String(), `1230928137`)
 }
-
 
 func BenchmarkWriteInt(b *testing.B) {
 	v := -3

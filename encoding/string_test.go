@@ -10,8 +10,8 @@ import (
 // Ensures that a string can be escaped and encoded.
 func TestWriteString(t *testing.T) {
 	var b bytes.Buffer
-	WriteString(&b, "foo\n\"")
-	assert.Equal(t, b.String(), `"foo\n\""`)
+	WriteString(&b, "foo\t\n\r\"大")
+	assert.Equal(t, b.String(), `"foo\u0009\n\r\"大"`)
 }
 
 // Ensures that a blank string can be encoded.
@@ -20,8 +20,6 @@ func TestWriteBlankString(t *testing.T) {
 	WriteString(&b, "")
 	assert.Equal(t, b.String(), `""`)
 }
-
-
 
 func BenchmarkWriteRawBytes(b *testing.B) {
 	s := "hello, world"

@@ -28,5 +28,3 @@ func WriteUint64(w io.Writer, v uint64) error {
 	_, err := w.Write(strconv.AppendUint(b[:0], v, 10))
 	return err
 }
-
-
