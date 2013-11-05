@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"io"
 	"reflect"
+	"strings"
 )
 
 // Used for marking fields as not written. Not actually returned to user.
@@ -81,17 +82,24 @@ func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 		tag = f.Tag.Value[1:len(f.Tag.Value)-1]
 		tag = reflect.StructTag(tag).Get("json")
 	}
+	tags := strings.Split(tag, ",")
 
-	// Ignore field.
-	if len(tag) > 0 && tag[0] == '-' {
-		return ignoreFieldError
+	// Extract json key name.
+	var key = name
+	if len(tags) > 0 {
+		if tags[0] == "-" {
+			return ignoreFieldError
+		} else if len(tags[0]) > 0 {
+			key = tags[0]
+		}
 	}
 
+	// Primative and complex types need separate handling.
 	switch f.Type.(type) {
 	case *ast.Ident:
-		return writePrimativeFieldEncoding(w, name, f, tag)
+		return writePrimativeFieldEncoding(w, name, key, f, tag)
 	case *ast.StarExpr:
-		return writePointerFieldEncoding(w, name, f, tag)
+		return writePointerFieldEncoding(w, name, key, f, tag)
 	case *ast.ArrayType:
 		fmt.Println("ARRAY!")
 	}
@@ -99,10 +107,10 @@ func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 }
 
 // writeFieldEncoding generates the encoder code for a single primative field.
-func writePrimativeFieldEncoding(w io.Writer, name string, f *ast.Field, tag string) error {
+func writePrimativeFieldEncoding(w io.Writer, name string, key string, f *ast.Field, tag string) error {
 	typ := f.Type.(*ast.Ident)
 
-	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", name)
+	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", key)
 	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
 
 	switch typ.Name {
@@ -130,7 +138,7 @@ func writePrimativeFieldEncoding(w io.Writer, name string, f *ast.Field, tag str
 }
 
 // writePointerFieldEncoding generates the encoding code for a single field with a pointer type.
-func writePointerFieldEncoding(w io.Writer, name string, f *ast.Field, tag string) error {
+func writePointerFieldEncoding(w io.Writer, name string, key string, f *ast.Field, tag string) error {
 	typ := f.Type.(*ast.StarExpr)
 	x, ok := typ.X.(*ast.Ident)
 	if !ok {
