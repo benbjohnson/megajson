@@ -5,50 +5,43 @@ import (
 	"fmt"
 	"go/ast"
 	"io"
-	"reflect"
-	"strconv"
-	"strings"
 )
 
-// GenerateTypeEncoder generates a struct for a single Type.
-func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
+// GenerateTypeDecoder generates a decoder for a single Type.
+func writeTypeDecoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 	var b bytes.Buffer
 	name := typeSpec.Name.Name
 
 	// Ignore type non-struct specs.
 	structType, ok := typeSpec.Type.(*ast.StructType)
-	if !ok {
+	if structType != nil && !ok {
 		return nil
 	}
 
 	// Generate the encoder.
-	fmt.Fprintf(&b, "type %sJSONEncoder struct {", name)
-	fmt.Fprintln(&b, "w io.Writer")
+	fmt.Fprintf(&b, "type %sJSONDecoder struct {", name)
+	fmt.Fprintln(&b, "s scanner.Scanner")
 	fmt.Fprintln(&b, "}")
 
 	// Generate the constructor.
-	fmt.Fprintf(&b, "func New%sJSONEncoder(w io.Writer) *%sJSONEncoder {\n", name, name)
-	fmt.Fprintf(&b, "return &%sJSONEncoder{w: w}\n", name)
+	fmt.Fprintf(&b, "func New%sJSONDecoder(w io.Writer) *%sJSONDecoder {\n", name, name)
+	fmt.Fprintf(&b, "return &%sJSONDecoder{s: scanner.NewScanner(w)}\n", name)
 	fmt.Fprintln(&b, "}")
 	fmt.Fprintln(&b, "")
 
 	// Generate the encode function.
-	fmt.Fprintf(&b, "func (e *%sJSONEncoder) Encode(v *%s) error {\n", name, name)
-	fmt.Fprintf(&b, "if v == nil {\nreturn encoding.WriteBytes(e.w, []byte(`null`))\n}\n\n")
+	fmt.Fprintf(&b, "func (e *%sJSONDecoder) Decode(v **%s) error {\n", name, name)
+	fmt.Fprintf(&b, "if tok, _, err := e.s.Scan(); err != nil { return err } else if tok != scanner.TLBRACE { return errors.New(\"Expected '{'\") }\n")
 
-	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '{'); err != nil {\nreturn err\n}\n")
+	// TODO: Create loop+switch to parse incoming fields.
 
+	/*
 	index := 0
 	for _, field := range structType.Fields.List {
 		for _, name := range field.Names {
 			// Write to a temporary buffer to check if anything is written.
 			var buf bytes.Buffer
-			if err := writeFieldEncoding(&buf, name.Name, field); buf.Len() > 0 {
-				// Write separating comma after the first field.
-				if index > 0 {
-					fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, ','); err != nil {\nreturn err\n}\n")
-				}
-
+			if err := writeFieldDecoding(&buf, name.Name, field); buf.Len() > 0 {
 				// Copy over to main buffer.
 				buf.WriteTo(&b)
 				index++
@@ -58,8 +51,9 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 			}
 		}
 	}
+	*/
 
-	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '}'); err != nil {\nreturn err\n}\n")
+	fmt.Fprintf(&b, "if tok, _, err := e.s.Scan(); err != nil { return err } else if tok != scanner.TRBRACE { return errors.New(\"Expected '}'\") }\n")
 	fmt.Fprintf(&b, "return nil\n")
 	fmt.Fprintf(&b, "}\n")
 
@@ -71,6 +65,7 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 	return nil
 }
 
+/*
 // writeFieldEncoding generates the encoder code for a single field.
 func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 	var tag string
@@ -183,3 +178,4 @@ func writeArrayFieldEncoding(w io.Writer, varname string, typ *ast.ArrayType, ta
 	_, err := b.WriteTo(w)
 	return err
 }
+*/
