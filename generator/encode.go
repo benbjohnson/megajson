@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"io"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -110,7 +111,7 @@ func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 func writePrimativeFieldEncoding(w io.Writer, name string, key string, f *ast.Field, tag string) error {
 	typ := f.Type.(*ast.Ident)
 
-	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", key)
+	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, %s); err != nil {\nreturn err\n}\n", strconv.Quote(key))
 	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
 
 	switch typ.Name {
@@ -145,7 +146,7 @@ func writePointerFieldEncoding(w io.Writer, name string, key string, f *ast.Fiel
 		return unsupportedTypeError
 	}
 
-	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, \"%s\"); err != nil {\nreturn err\n}\n", name)
+	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, %s); err != nil {\nreturn err\n}\n", strconv.Quote(key))
 	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
 	fmt.Fprintf(w, "if err := New%sJSONEncoder(e.w).Encode(v.%s); err != nil {\nreturn err\n}\n", x.Name, name)
 	return nil
