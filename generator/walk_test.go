@@ -12,33 +12,33 @@ import (
 
 // Ensures that a simple struct can be encoded to JSON.
 func TestGeneratorWalkSimpleEncoder(t *testing.T) {
-	withFixture("simple", func(path string) {
-		// Generate encoder.
-		err := Walk(path)
-		assert.NoError(t, err)
-
-		// Shell to `go run encode.go`.
-		files, _ := filepath.Glob(filepath.Join(path, "*"))
-		args := []string{"run"}
-		args = append(args, files...)
-		c := exec.Command("go", args...)
-		out, _ := c.CombinedOutput()
-
-		// Verify output.
-		assert.NoError(t, err)
-		assert.Equal(t, string(out), `{"StringX":"foo","IntX":200,"Int64X":189273,"myuint":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`)
-	})
+	out, err := runFixture("encode.simple")
+	assert.NoError(t, err)
+	assert.Equal(t, out, `{"StringX":"foo","IntX":200,"Int64X":189273,"myuint":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`)
 }
 
 // Ensures that a nested struct can be encoded to JSON.
 func TestGeneratorWalkNestedEncoder(t *testing.T) {
-	withFixture("nested", func(path string) {
+	out, err := runFixture("encode.nested")
+	assert.NoError(t, err)
+	assert.Equal(t, out, `{"StringX":"foo","BX":{"Name":"John","Age":20},"BY":null,"Bn":[{"Name":"Jane","Age":60}],"Bn2":[]}`)
+}
+
+// Ensures that a simple struct can be encoded to JSON.
+func TestGeneratorWalkSimpleDecoder(t *testing.T) {
+	/*
+	out, err := runFixture("simple.decode")
+	assert.NoError(t, err)
+	assert.Equal(t, out, `{"StringX":"foo","IntX":200,"Int64X":189273,"myuint":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`)
+	*/
+}
+
+func runFixture(name string) (ret string, err error) {
+	withFixture(name, func(path string) {
 		// Generate encoder.
-		err := Walk(path)
-		if err != nil {
-			fmt.Println(err.Error())
+		if err = Walk(path); err != nil {
+			return
 		}
-		assert.NoError(t, err)
 
 		// Shell to `go run encode.go`.
 		files, _ := filepath.Glob(filepath.Join(path, "*"))
@@ -46,11 +46,9 @@ func TestGeneratorWalkNestedEncoder(t *testing.T) {
 		args = append(args, files...)
 		c := exec.Command("go", args...)
 		out, _ := c.CombinedOutput()
-
-		// Verify output.
-		assert.NoError(t, err)
-		assert.Equal(t, string(out), `{"StringX":"foo","BX":{"Name":"John","Age":20},"BY":null,"Bn":[{"Name":"Jane","Age":60}],"Bn2":[]}`)
+		ret = string(out)
 	})
+	return
 }
 
 // Sets up a Go project using a given fixture directory.
