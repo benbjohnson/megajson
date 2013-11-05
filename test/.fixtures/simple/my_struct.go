@@ -9,5 +9,6 @@ type MyStruct struct {
     Float32X float32
     Float64X float64
     BoolX bool
+    IgnoreString string `json:"-"`
 }
 
