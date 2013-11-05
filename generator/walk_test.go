@@ -22,7 +22,7 @@ func TestGeneratorWalkSimpleEncoder(t *testing.T) {
 		args := []string{"run"}
 		args = append(args, files...)
 		c := exec.Command("go", args...)
-		out, _ := c.Output()
+		out, _ := c.CombinedOutput()
 
 		// Verify output.
 		assert.NoError(t, err)
@@ -35,6 +35,9 @@ func TestGeneratorWalkNestedEncoder(t *testing.T) {
 	withFixture("nested", func(path string) {
 		// Generate encoder.
 		err := Walk(path)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 		assert.NoError(t, err)
 
 		// Shell to `go run encode.go`.
@@ -42,11 +45,11 @@ func TestGeneratorWalkNestedEncoder(t *testing.T) {
 		args := []string{"run"}
 		args = append(args, files...)
 		c := exec.Command("go", args...)
-		out, _ := c.Output()
+		out, _ := c.CombinedOutput()
 
 		// Verify output.
 		assert.NoError(t, err)
-		assert.Equal(t, string(out), `{"StringX":"foo","BX":{"Name":"John","Age":20},"BY":null}`)
+		assert.Equal(t, string(out), `{"StringX":"foo","BX":{"Name":"John","Age":20},"BY":null,"Bn":[{"Name":"Jane","Age":60}],"Bn2":[]}`)
 	})
 }
 
