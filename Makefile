@@ -10,7 +10,7 @@ default:
 
 assets: generator/decoder_tmpl.go
 
-generator/decoder_tmpl.go: generator/decoder.tmpl
+generator/decoder_tmpl.go: generator/tmpl/decoder.tmpl
 	cat $< | go-bindata -f decoder_tmpl -p generator | gofmt > $@
 
 

@@ -13,6 +13,9 @@ type Scanner interface {
 	Scan() (int, []byte, error)
 	ReadString(target *string) error
 	ReadInt(target *int) error
+	ReadInt64(target *int64) error
+	ReadUint(target *uint) error
+	ReadUint64(target *uint64) error
 }
 
 type scanner struct {
@@ -270,6 +273,61 @@ func (s *scanner) ReadInt(target *int) error {
 	case TNUMBER:
 		n, _ := strconv.ParseInt(string(b), 10, 64)
 		*target = int(n)
+	case TSTRING, TTRUE, TFALSE, TNULL:
+		*target = 0
+	default:
+		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+	}
+	return nil
+}
+
+// ReadInt64 reads a token into an int64 variable.
+func (s *scanner) ReadInt64(target *int64) error {
+	tok, b, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	switch tok {
+	case TNUMBER:
+		n, _ := strconv.ParseInt(string(b), 10, 64)
+		*target = n
+	case TSTRING, TTRUE, TFALSE, TNULL:
+		*target = 0
+	default:
+		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+	}
+	return nil
+}
+
+
+// ReadUint reads a token into an uint variable.
+func (s *scanner) ReadUint(target *uint) error {
+	tok, b, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	switch tok {
+	case TNUMBER:
+		n, _ := strconv.ParseUint(string(b), 10, 64)
+		*target = uint(n)
+	case TSTRING, TTRUE, TFALSE, TNULL:
+		*target = 0
+	default:
+		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+	}
+	return nil
+}
+
+// ReadUint64 reads a token into an uint64 variable.
+func (s *scanner) ReadUint64(target *uint64) error {
+	tok, b, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	switch tok {
+	case TNUMBER:
+		n, _ := strconv.ParseUint(string(b), 10, 64)
+		*target = n
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0
 	default:

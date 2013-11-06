@@ -106,3 +106,35 @@ func TestReadInt(t *testing.T) {
 	assert.Equal(t, v, 100)
 }
 
+// Ensures that a non-number value is read into an int field as zero.
+func TestReadNonNumberAsInt(t *testing.T) {
+	var v int
+	err := NewScanner(strings.NewReader(`"foo"`)).ReadInt(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, 0)
+}
+
+// Ensures that an int64 can be read into a field.
+func TestReadInt64(t *testing.T) {
+	var v int64
+	err := NewScanner(strings.NewReader(`-100`)).ReadInt64(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, -100)
+}
+
+// Ensures that a uint can be read into a field.
+func TestReadUint(t *testing.T) {
+	var v uint
+	err := NewScanner(strings.NewReader(`100`)).ReadUint(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, uint(100))
+}
+
+// Ensures that an uint64 can be read into a field.
+func TestReadUint64(t *testing.T) {
+	var v uint64
+	err := NewScanner(strings.NewReader(`1024`)).ReadUint64(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, uint(1024))
+}
+
