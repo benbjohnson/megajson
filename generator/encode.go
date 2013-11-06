@@ -4,11 +4,60 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"io"
 	"reflect"
 	"strconv"
 	"strings"
 )
+
+func writeFileEncoder(w io.Writer, file *ast.File) error {
+	// Write header.
+	var b bytes.Buffer
+	fmt.Fprintf(&b, "package %s\n", file.Name.Name)
+	fmt.Fprintf(&b, "import (\n")
+	fmt.Fprintf(&b, "\"io\"\n")
+	fmt.Fprintf(&b, "\"github.com/benbjohnson/megajson/encoding\"\n")
+	fmt.Fprintf(&b, ")\n")
+
+	// Loop over each spec and create a encoder.
+	generated := false
+	for _, decl := range file.Decls {
+		if decl, ok := decl.(*ast.GenDecl); ok {
+			for _, spec := range decl.Specs {
+				if spec, ok := spec.(*ast.TypeSpec); ok {
+					err := writeTypeEncoder(&b, spec)
+					if err != nil {
+						return err
+					}
+					generated = true
+				}
+			}
+		}
+	}
+
+	// If no types were found to encode then skip this file.
+	if !generated {
+		return nil
+	}
+
+	// fmt.Println("+++++\n", b.String(), "\n+++++")
+
+	// Format source.
+	bfmt, err := format.Source(b.Bytes())
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("+++++\n", string(bfmt), "\n+++++")
+
+	// Write to output file.
+	if _, err := w.Write(bfmt); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // GenerateTypeEncoder generates a struct for a single Type.
 func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {

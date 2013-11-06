@@ -11,32 +11,45 @@ import (
 )
 
 // Ensures that a simple struct can be encoded to JSON.
-func TestGeneratorWalkSimpleEncoder(t *testing.T) {
-	out, err := runFixture("encode.simple")
+func TestGenerateEncodeSimple(t *testing.T) {
+	out, err := runEncodingFixture("encode/simple")
 	assert.NoError(t, err)
 	assert.Equal(t, out, `{"StringX":"foo","IntX":200,"Int64X":189273,"myuint":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`)
 }
 
 // Ensures that a nested struct can be encoded to JSON.
-func TestGeneratorWalkNestedEncoder(t *testing.T) {
-	out, err := runFixture("encode.nested")
+func TestGenerateEncodeNested(t *testing.T) {
+	out, err := runEncodingFixture("encode/nested")
 	assert.NoError(t, err)
 	assert.Equal(t, out, `{"StringX":"foo","BX":{"Name":"John","Age":20},"BY":null,"Bn":[{"Name":"Jane","Age":60}],"Bn2":[]}`)
 }
 
 // Ensures that a simple struct can be encoded to JSON.
-func TestGeneratorWalkSimpleDecoder(t *testing.T) {
-	/*
-	out, err := runFixture("simple.decode")
+func TestGenerateDecodeSimple(t *testing.T) {
+	out, err := runDecodingFixture("decode/simple")
 	assert.NoError(t, err)
 	assert.Equal(t, out, `{"StringX":"foo","IntX":200,"Int64X":189273,"myuint":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`)
-	*/
 }
 
-func runFixture(name string) (ret string, err error) {
+func runEncodingFixture(name string) (ret string, err error) {
+	options := NewOptions()
+	options.GenerateEncoder = true
+	options.GenerateDecoder = false
+	return runFixture(name, options)
+}
+
+func runDecodingFixture(name string) (ret string, err error) {
+	options := NewOptions()
+	options.GenerateEncoder = false
+	options.GenerateDecoder = true
+	return runFixture(name, options)
+}
+
+func runFixture(name string, options *Options) (ret string, err error) {
 	withFixture(name, func(path string) {
 		// Generate encoder.
-		if err = Walk(path); err != nil {
+		if err = Generate(path, options); err != nil {
+			fmt.Println("Generate error:", err.Error())
 			return
 		}
 

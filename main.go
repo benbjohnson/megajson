@@ -18,7 +18,8 @@ func main() {
 	}
 
 	path := flag.Arg(0)
-	if err := generator.Walk(path); err != nil {
+	options := generator.NewOptions()
+	if err := generator.Generate(path, options); err != nil {
 		log.Fatalln(err)
 	}
 }

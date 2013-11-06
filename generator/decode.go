@@ -4,8 +4,57 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"io"
 )
+
+func writeFileDecoder(w io.Writer, file *ast.File) error {
+	// Write header.
+	var b bytes.Buffer
+	fmt.Fprintf(&b, "package %s\n", file.Name.Name)
+	fmt.Fprintln(&b, `import (`)
+	fmt.Fprintln(&b, `"errors"`)
+	fmt.Fprintln(&b, `"io"`)
+	fmt.Fprintln(&b, `"github.com/benbjohnson/megajson/scanner"`)
+	fmt.Fprintln(&b, `)`)
+
+	// Loop over each spec and create a encoder.
+	generated := false
+	for _, decl := range file.Decls {
+		if decl, ok := decl.(*ast.GenDecl); ok {
+			for _, spec := range decl.Specs {
+				if spec, ok := spec.(*ast.TypeSpec); ok {
+					err := writeTypeDecoder(&b, spec)
+					if err != nil {
+						return err
+					}
+					generated = true
+				}
+			}
+		}
+	}
+
+	// If no types were found to encode then skip this file.
+	if !generated {
+		return nil
+	}
+
+	// fmt.Println("-----\n", b.String(), "\n-----")
+
+	// Format source.
+	bfmt, err := format.Source(b.Bytes())
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("-----\n", string(bfmt), "\n-----")
+
+	if _, err := w.Write(bfmt); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // GenerateTypeDecoder generates a decoder for a single Type.
 func writeTypeDecoder(w io.Writer, typeSpec *ast.TypeSpec) error {
@@ -24,14 +73,15 @@ func writeTypeDecoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 	fmt.Fprintln(&b, "}")
 
 	// Generate the constructor.
-	fmt.Fprintf(&b, "func New%sJSONDecoder(w io.Writer) *%sJSONDecoder {\n", name, name)
-	fmt.Fprintf(&b, "return &%sJSONDecoder{s: scanner.NewScanner(w)}\n", name)
+	fmt.Fprintf(&b, "func New%sJSONDecoder(r io.Reader) *%sJSONDecoder {\n", name, name)
+	fmt.Fprintf(&b, "return &%sJSONDecoder{s: scanner.NewScanner(r)}\n", name)
 	fmt.Fprintln(&b, "}")
 	fmt.Fprintln(&b, "")
 
 	// Generate the encode function.
 	fmt.Fprintf(&b, "func (e *%sJSONDecoder) Decode(v **%s) error {\n", name, name)
-	fmt.Fprintf(&b, "if tok, _, err := e.s.Scan(); err != nil { return err } else if tok != scanner.TLBRACE { return errors.New(\"Expected '{'\") }\n")
+	fmt.Fprintf(&b, "s := e.s\n")
+	fmt.Fprintf(&b, "if tok, _, err := s.Scan(); err != nil { return err } else if tok != scanner.TLBRACE { return errors.New(\"Expected '{'\") }\n")
 
 	// TODO: Create loop+switch to parse incoming fields.
 
@@ -53,7 +103,7 @@ func writeTypeDecoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 	}
 	*/
 
-	fmt.Fprintf(&b, "if tok, _, err := e.s.Scan(); err != nil { return err } else if tok != scanner.TRBRACE { return errors.New(\"Expected '}'\") }\n")
+	fmt.Fprintf(&b, "if tok, _, err := s.Scan(); err != nil { return err } else if tok != scanner.TRBRACE { return errors.New(\"Expected '}'\") }\n")
 	fmt.Fprintf(&b, "return nil\n")
 	fmt.Fprintf(&b, "}\n")
 
