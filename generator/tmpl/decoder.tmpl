@@ -1,3 +1,53 @@
+{{define "decodeprimitive"}}
+	{{if istype . "string"}}
+		if err := s.ReadString(&v.{{fieldname .}}); err != nil {
+			return err
+		}
+	{{end}}
+	{{if istype . "int"}}
+		if err := s.ReadInt(&v.{{fieldname .}}); err != nil {
+			return err
+		}
+	{{end}}
+	{{if istype . "int64"}}
+		if err := s.ReadInt64(&v.{{fieldname .}}); err != nil {
+			return err
+		}
+	{{end}}
+	{{if istype . "uint"}}
+		if err := s.ReadUint(&v.{{fieldname .}}); err != nil {
+			return err
+		}
+	{{end}}
+	{{if istype . "uint64"}}
+		if err := s.ReadUint64(&v.{{fieldname .}}); err != nil {
+			return err
+		}
+	{{end}}
+	{{if istype . "float32"}}
+		if err := s.ReadFloat32(&v.{{fieldname .}}); err != nil {
+			return err
+		}
+	{{end}}
+	{{if istype . "float64"}}
+		if err := s.ReadFloat64(&v.{{fieldname .}}); err != nil {
+			return err
+		}
+	{{end}}
+	{{if istype . "bool"}}
+		if err := s.ReadBool(&v.{{fieldname .}}); err != nil {
+			return err
+		}
+	{{end}}
+{{end}}
+
+{{define "decodestar"}}
+	if err := New{{subtype .}}JSONScanDecoder(s).Decode(&v.{{fieldname .}}); err != nil {
+		return err
+	}
+{{end}}
+
+
 package {{.Name.Name}}
 
 import (
@@ -68,53 +118,14 @@ func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 
 		switch key {
 		{{range fields .}}
-			{{$keyname := keyname .}}
-			{{if $keyname}}
-			case {{$keyname | printf "%q"}}:
-				{{if istype . "string"}}
-					if err := s.ReadString(&v.{{fieldname .}}); err != nil {
-						return err
-					}
+			{{if keyname .}}
+			case {{keyname . | printf "%q"}}:
+				{{if isprimitivetype .}}
+					{{template "decodeprimitive" .}}
 				{{end}}
-				{{if istype . "int"}}
-					if err := s.ReadInt(&v.{{fieldname .}}); err != nil {
-						return err
-					}
-				{{end}}
-				{{if istype . "int64"}}
-					if err := s.ReadInt64(&v.{{fieldname .}}); err != nil {
-						return err
-					}
-				{{end}}
-				{{if istype . "uint"}}
-					if err := s.ReadUint(&v.{{fieldname .}}); err != nil {
-						return err
-					}
-				{{end}}
-				{{if istype . "uint64"}}
-					if err := s.ReadUint64(&v.{{fieldname .}}); err != nil {
-						return err
-					}
-				{{end}}
-				{{if istype . "float32"}}
-					if err := s.ReadFloat32(&v.{{fieldname .}}); err != nil {
-						return err
-					}
-				{{end}}
-				{{if istype . "float64"}}
-					if err := s.ReadFloat64(&v.{{fieldname .}}); err != nil {
-						return err
-					}
-				{{end}}
-				{{if istype . "bool"}}
-					if err := s.ReadBool(&v.{{fieldname .}}); err != nil {
-						return err
-					}
-				{{end}}
+
 				{{if istype . "*"}}
-					if err := New{{subtype .}}JSONScanDecoder(s).Decode(&v.{{fieldname .}}); err != nil {
-						return err
-					}
+					{{template "decodestar" .}}
 				{{end}}
 			{{end}}
 		{{end}}

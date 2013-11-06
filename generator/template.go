@@ -34,20 +34,40 @@ func getStructFields(spec *ast.TypeSpec) []*ast.Field {
 	return s
 }
 
+// getType returns the name of the type of the field.
+func getType(field *ast.Field) string {
+	if ident, ok := field.Type.(*ast.Ident); ok {
+		return ident.Name
+	} else if _, ok := field.Type.(*ast.StarExpr); ok {
+		return "*"
+	} else if _, ok := field.Type.(*ast.ArrayType); ok {
+		return "[]"
+	}
+	return ""
+}
+
 // isType returns true if the field is a given type.
 func isType(field *ast.Field, typ string) bool {
-	if ident, ok := field.Type.(*ast.Ident); ok {
-		return ident.Name == typ
-	} else if _, ok := field.Type.(*ast.StarExpr); ok {
-		return typ == "*"
+	return getType(field) == typ
+}
+
+// isPrimitiveType returns true if the field is a primitive type.
+func isPrimitiveType(field *ast.Field) bool {
+	switch getType(field) {
+	case "string", "int", "int64", "uint", "uint64", "float32", "float64", "bool":
+		return true
 	}
 	return false
 }
 
 // getSubType returns the subtype of a pointer or array.
 func getSubType(field *ast.Field) string {
-	if star, ok := field.Type.(*ast.StarExpr); ok {
-		if ident, ok := star.X.(*ast.Ident); ok {
+	if typ, ok := field.Type.(*ast.StarExpr); ok {
+		if ident, ok := typ.X.(*ast.Ident); ok {
+			return ident.Name
+		}
+	} else if typ, ok := field.Type.(*ast.ArrayType); ok {
+		if ident, ok := typ.Elt.(*ast.Ident); ok {
 			return ident.Name
 		}
 	}
