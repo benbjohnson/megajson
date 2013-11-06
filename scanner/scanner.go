@@ -5,11 +5,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 )
 
 // Scanner is a tokenizer for JSON input from an io.Reader.
 type Scanner interface {
 	Scan() (int, []byte, error)
+	ReadString(target *string) error
+	ReadInt(target *int) error
 }
 
 type scanner struct {
@@ -238,5 +241,40 @@ func (s *scanner) scanNull() (int, []byte, error) {
 		return 0, nil, err
 	}
 	return TNULL, nil, nil
+}
+
+// ReadString reads a token into a string variable.
+func (s *scanner) ReadString(target *string) error {
+	tok, b, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	switch tok {
+	case TSTRING:
+		*target = string(b)
+	case TNUMBER, TTRUE, TFALSE, TNULL:
+		*target = ""
+	default:
+		return fmt.Errorf("Unexpected %s: %s; expected string", TokenName(tok), string(b))
+	}
+	return nil
+}
+
+// ReadInt reads a token into an int variable.
+func (s *scanner) ReadInt(target *int) error {
+	tok, b, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	switch tok {
+	case TNUMBER:
+		n, _ := strconv.ParseInt(string(b), 10, 64)
+		*target = int(n)
+	case TSTRING, TTRUE, TFALSE, TNULL:
+		*target = 0
+	default:
+		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+	}
+	return nil
 }
 

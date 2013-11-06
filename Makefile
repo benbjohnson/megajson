@@ -8,6 +8,14 @@ default:
 	@echo "    make fmt"
 	@echo
 
+assets: generator/decoder_tmpl.go
+
+generator/decoder_tmpl.go: generator/decoder.tmpl
+	cat $< | go-bindata -f decoder_tmpl -p generator | gofmt > $@
+
+
+.PHONY: assets
+
 bench:
 	go run main.go -- test/code.go
 	go test -v -test.bench=. ./test
@@ -28,3 +36,8 @@ coverpreq:
 
 fmt:
 	go fmt ./...
+
+test:
+	go test -v ./...
+
+.PHONY: test

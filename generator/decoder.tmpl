@@ -1,0 +1,84 @@
+package {{.Name.Name}}
+
+import (
+	"errors"
+	"fmt"
+	"io"
+	"github.com/benbjohnson/megajson/scanner"
+)
+
+{{range types .}}
+type {{.Name.Name}}JSONDecoder struct {
+	s scanner.Scanner
+}
+
+func New{{.Name.Name}}JSONDecoder(r io.Reader) *{{.Name.Name}}JSONDecoder {
+	return &{{.Name.Name}}JSONDecoder{s: scanner.NewScanner(r)}
+}
+
+func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
+	s := e.s
+	if tok, _, err := s.Scan(); err != nil {
+		return err
+	} else if tok != scanner.TLBRACE {
+		return errors.New("Expected '{'")
+	}
+
+	v := *ptr
+
+	// Loop over key/value pairs.
+	index := 0
+	for {
+		// Read in key.
+		var key string
+		tok, tokval, err := s.Scan()
+		if err != nil {
+			return err
+		} else if tok == scanner.TRBRACE {
+			return nil
+		} else if tok == scanner.TCOMMA {
+			if index == 0 {
+				return fmt.Errorf("Unexpected comma")
+			}
+			if tok, tokval, err = s.Scan(); err != nil {
+				return err
+			}
+		}
+
+		if tok != scanner.TSTRING {
+			return fmt.Errorf("Unexpected %s: %s; expected '{' or string", scanner.TokenName(tok), string(tokval))
+		} else {
+			key = string(tokval)
+		}
+
+		// Read in the colon.
+		if tok, tokval, err := s.Scan(); err != nil {
+			return err
+		} else if tok != scanner.TCOLON {
+			return fmt.Errorf("Unexpected %s: %s; expected colon", scanner.TokenName(tok), string(tokval))
+		}
+
+		switch key {
+		{{range fields .}}
+		case {{fieldname . | printf "%q"}}:
+			{{if istype . "string"}}
+				if err := s.ReadString(&v.{{fieldname .}}); err != nil {
+					return err
+				}
+			{{end}}
+			{{if istype . "int"}}
+				if err := s.ReadInt(&v.{{fieldname .}}); err != nil {
+					return err
+				}
+			{{end}}
+		{{end}}
+		}
+
+		index++
+	}
+
+	return nil
+}
+
+
+{{end}}

@@ -73,3 +73,36 @@ func TestScanEOF(t *testing.T) {
 	_, _, err := NewScanner(strings.NewReader(``)).Scan()
 	assert.Equal(t, err, io.EOF)
 }
+
+
+// Ensures that a string can be read into a field.
+func TestReadString(t *testing.T) {
+	var v string
+	err := NewScanner(strings.NewReader(`"foo"`)).ReadString(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, "foo")
+}
+
+// Ensures that a non-string value is read into a string field as blank.
+func TestReadNonStringAsString(t *testing.T) {
+	var v string
+	err := NewScanner(strings.NewReader(`12`)).ReadString(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, "")
+}
+
+// Ensures that a non-value returns a read error.
+func TestReadNonValueAsString(t *testing.T) {
+	var v string
+	err := NewScanner(strings.NewReader(`{`)).ReadString(&v)
+	assert.Error(t, err)
+}
+
+// Ensures that an int can be read into a field.
+func TestReadInt(t *testing.T) {
+	var v int
+	err := NewScanner(strings.NewReader(`100`)).ReadInt(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, 100)
+}
+
