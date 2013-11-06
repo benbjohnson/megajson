@@ -1,48 +1,48 @@
 {{define "decodeprimitive"}}
 	{{if istype . "string"}}
-		if err := s.ReadString(&v.{{fieldname .}}); err != nil {
+		if err := s.ReadString(v); err != nil {
 			return err
 		}
 	{{end}}
 	{{if istype . "int"}}
-		if err := s.ReadInt(&v.{{fieldname .}}); err != nil {
+		if err := s.ReadInt(v); err != nil {
 			return err
 		}
 	{{end}}
 	{{if istype . "int64"}}
-		if err := s.ReadInt64(&v.{{fieldname .}}); err != nil {
+		if err := s.ReadInt64(v); err != nil {
 			return err
 		}
 	{{end}}
 	{{if istype . "uint"}}
-		if err := s.ReadUint(&v.{{fieldname .}}); err != nil {
+		if err := s.ReadUint(v); err != nil {
 			return err
 		}
 	{{end}}
 	{{if istype . "uint64"}}
-		if err := s.ReadUint64(&v.{{fieldname .}}); err != nil {
+		if err := s.ReadUint64(v); err != nil {
 			return err
 		}
 	{{end}}
 	{{if istype . "float32"}}
-		if err := s.ReadFloat32(&v.{{fieldname .}}); err != nil {
+		if err := s.ReadFloat32(v); err != nil {
 			return err
 		}
 	{{end}}
 	{{if istype . "float64"}}
-		if err := s.ReadFloat64(&v.{{fieldname .}}); err != nil {
+		if err := s.ReadFloat64(v); err != nil {
 			return err
 		}
 	{{end}}
 	{{if istype . "bool"}}
-		if err := s.ReadBool(&v.{{fieldname .}}); err != nil {
+		if err := s.ReadBool(v); err != nil {
 			return err
 		}
 	{{end}}
 {{end}}
 
 {{define "decodestar"}}
-	if err := New{{subtype .}}JSONScanDecoder(s).Decode(&v.{{fieldname .}}); err != nil {
+	if err := New{{subtype .}}JSONScanDecoder(s).Decode(v); err != nil {
 		return err
 	}
 {{end}}
@@ -116,19 +116,23 @@ func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 			return fmt.Errorf("Unexpected %s: %s; expected colon", scanner.TokenName(tok), string(tokval))
 		}
 
-		switch key {
-		{{range fields .}}
-			{{if keyname .}}
-			case {{keyname . | printf "%q"}}:
-				{{if isprimitivetype .}}
-					{{template "decodeprimitive" .}}
-				{{end}}
+		{
+			switch key {
+			{{range fields .}}
+				{{if keyname .}}
+				case {{keyname . | printf "%q"}}:
+					{{if isprimitivetype .}}
+						v := &v.{{fieldname .}}
+						{{template "decodeprimitive" .}}
+					{{end}}
 
-				{{if istype . "*"}}
-					{{template "decodestar" .}}
+					{{if istype . "*"}}
+						v := &v.{{fieldname .}}
+						{{template "decodestar" .}}
+					{{end}}
 				{{end}}
 			{{end}}
-		{{end}}
+			}
 		}
 
 		index++
