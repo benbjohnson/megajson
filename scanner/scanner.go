@@ -16,6 +16,7 @@ type Scanner interface {
 	ReadInt64(target *int64) error
 	ReadUint(target *uint) error
 	ReadUint64(target *uint64) error
+	ReadBool(target *bool) error
 }
 
 type scanner struct {
@@ -330,6 +331,23 @@ func (s *scanner) ReadUint64(target *uint64) error {
 		*target = n
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0
+	default:
+		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+	}
+	return nil
+}
+
+// ReadBool reads a token into a boolean variable.
+func (s *scanner) ReadBool(target *bool) error {
+	tok, b, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	switch tok {
+	case TTRUE:
+		*target = true
+	case TFALSE, TSTRING, TNUMBER, TNULL:
+		*target = false
 	default:
 		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
 	}
