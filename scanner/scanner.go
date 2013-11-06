@@ -16,6 +16,8 @@ type Scanner interface {
 	ReadInt64(target *int64) error
 	ReadUint(target *uint) error
 	ReadUint64(target *uint64) error
+	ReadFloat32(target *float32) error
+	ReadFloat64(target *float64) error
 	ReadBool(target *bool) error
 }
 
@@ -345,7 +347,25 @@ func (s *scanner) ReadFloat32(target *float32) error {
 	}
 	switch tok {
 	case TNUMBER:
-		n, _ := strconv.ParseFloat(s, 32)
+		n, _ := strconv.ParseFloat(string(b), 32)
+		*target = float32(n)
+	case TSTRING, TTRUE, TFALSE, TNULL:
+		*target = 0
+	default:
+		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+	}
+	return nil
+}
+
+// ReadFloat64 reads a token into a float64 variable.
+func (s *scanner) ReadFloat64(target *float64) error {
+	tok, b, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	switch tok {
+	case TNUMBER:
+		n, _ := strconv.ParseFloat(string(b), 64)
 		*target = n
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0

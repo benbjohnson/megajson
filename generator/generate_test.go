@@ -28,7 +28,7 @@ func TestGenerateEncodeNested(t *testing.T) {
 func TestGenerateDecodeSimple(t *testing.T) {
 	out, err := runDecodingFixture("decode/simple")
 	assert.NoError(t, err)
-	assert.Equal(t, out, `{"StringX":"foo","IntX":200,"Int64X":189273,"myuint":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`)
+	assert.Equal(t, out, `|foo|200|189273|2392|172389984|182.23|19380.1312|true|`)
 }
 
 func runEncodingFixture(name string) (ret string, err error) {

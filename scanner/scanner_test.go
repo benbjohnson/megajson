@@ -140,10 +140,18 @@ func TestReadUint64(t *testing.T) {
 
 // Ensures that a float32 can be read into a field.
 func TestReadFloat32(t *testing.T) {
-	var v uint64
+	var v float32
 	err := NewScanner(strings.NewReader(`1293.123`)).ReadFloat32(&v)
 	assert.NoError(t, err)
 	assert.Equal(t, v, float32(1293.123))
+}
+
+// Ensures that a float64 can be read into a field.
+func TestReadFloat64(t *testing.T) {
+	var v float64
+	err := NewScanner(strings.NewReader(`9871293.414123`)).ReadFloat64(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, 9871293.414123)
 }
 
 // Ensures that a boolean can be read into a field.
