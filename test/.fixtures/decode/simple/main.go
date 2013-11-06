@@ -6,8 +6,7 @@ import (
 	"strings"
 )
 
-// const DATA = `{"StringX":"foo","IntX":200,"Int64X":189273,"myuint":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`
-const DATA = `{"StringX":"foo","IntX":200}`
+const DATA = `{"StringX":"foo","IntX":200,"Int64X":189273,"myuint":2392,"Uint64X":172389984,"Float32X":182.23,"Float64X":19380.1312,"BoolX":true}`
 
 func main() {
 	s := &MyStruct{}

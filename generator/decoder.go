@@ -17,6 +17,7 @@ func init() {
 		"fields": getStructFields,
 		"istype": isType,
 		"fieldname": getFieldName,
+		"keyname": getJSONKeyName,
 	}
 	decoderTemplate = template.Must(template.New("decoder").Funcs(m).Parse(string(decoder_tmpl())))
 }

@@ -337,6 +337,24 @@ func (s *scanner) ReadUint64(target *uint64) error {
 	return nil
 }
 
+// ReadFloat32 reads a token into a float32 variable.
+func (s *scanner) ReadFloat32(target *float32) error {
+	tok, b, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	switch tok {
+	case TNUMBER:
+		n, _ := strconv.ParseFloat(s, 32)
+		*target = n
+	case TSTRING, TTRUE, TFALSE, TNULL:
+		*target = 0
+	default:
+		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+	}
+	return nil
+}
+
 // ReadBool reads a token into a boolean variable.
 func (s *scanner) ReadBool(target *bool) error {
 	tok, b, err := s.Scan()
