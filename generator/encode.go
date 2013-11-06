@@ -49,7 +49,7 @@ func writeFileEncoder(w io.Writer, file *ast.File) error {
 		return err
 	}
 
-	fmt.Println("+++++\n", string(bfmt), "\n+++++")
+	// fmt.Println("+++++\n", string(bfmt), "\n+++++")
 
 	// Write to output file.
 	if _, err := w.Write(bfmt); err != nil {

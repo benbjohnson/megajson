@@ -14,6 +14,7 @@ func writeFileDecoder(w io.Writer, file *ast.File) error {
 	fmt.Fprintf(&b, "package %s\n", file.Name.Name)
 	fmt.Fprintln(&b, `import (`)
 	fmt.Fprintln(&b, `"errors"`)
+	fmt.Fprintln(&b, `"fmt"`)
 	fmt.Fprintln(&b, `"io"`)
 	fmt.Fprintln(&b, `"github.com/benbjohnson/megajson/scanner"`)
 	fmt.Fprintln(&b, `)`)
@@ -39,11 +40,10 @@ func writeFileDecoder(w io.Writer, file *ast.File) error {
 		return nil
 	}
 
-	// fmt.Println("-----\n", b.String(), "\n-----")
-
 	// Format source.
 	bfmt, err := format.Source(b.Bytes())
 	if err != nil {
+		fmt.Println("-----\n", b.String(), "\n-----")
 		return err
 	}
 
@@ -83,7 +83,19 @@ func writeTypeDecoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 	fmt.Fprintf(&b, "s := e.s\n")
 	fmt.Fprintf(&b, "if tok, _, err := s.Scan(); err != nil { return err } else if tok != scanner.TLBRACE { return errors.New(\"Expected '{'\") }\n")
 
-	// TODO: Create loop+switch to parse incoming fields.
+	// Loop over keys and defer to appropriate type.
+	fmt.Fprintln(&b, "L: for {")
+	fmt.Fprintln(&b, "tok, tokvalue, err := s.Scan()")
+	fmt.Fprintln(&b, "if err != nil { return err }")
+	fmt.Fprintln(&b, "switch tok {")
+	fmt.Fprintln(&b, "case scanner.TSTRING: ")
+	fmt.Fprintln(&b, "  if scanner.")
+	fmt.Fprintln(&b, "case scanner.TRBRACE: break L")
+	fmt.Fprintf(&b, "default: return fmt.Errorf(\"Unexpected %%s: %%s\", scanner.TokenName(tok), string(tokvalue))\n")
+	fmt.Fprintln(&b, "}")
+
+	fmt.Fprintln(&b, "}")
+
 
 	/*
 	index := 0
@@ -103,7 +115,6 @@ func writeTypeDecoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 	}
 	*/
 
-	fmt.Fprintf(&b, "if tok, _, err := s.Scan(); err != nil { return err } else if tok != scanner.TRBRACE { return errors.New(\"Expected '}'\") }\n")
 	fmt.Fprintf(&b, "return nil\n")
 	fmt.Fprintf(&b, "}\n")
 
