@@ -16,6 +16,10 @@ func New{{.Name.Name}}JSONDecoder(r io.Reader) *{{.Name.Name}}JSONDecoder {
 	return &{{.Name.Name}}JSONDecoder{s: scanner.NewScanner(r)}
 }
 
+func New{{.Name.Name}}JSONScanDecoder(s scanner.Scanner) *{{.Name.Name}}JSONDecoder {
+	return &{{.Name.Name}}JSONDecoder{s: s}
+}
+
 func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 	s := e.s
 	if tok, _, err := s.Scan(); err != nil {
@@ -24,6 +28,10 @@ func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 		return errors.New("Expected '{'")
 	}
 
+	// Create the object if it doesn't exist.
+	if *ptr == nil {
+		*ptr = &{{.Name.Name}}{}
+	}
 	v := *ptr
 
 	// Loop over key/value pairs.
@@ -100,6 +108,11 @@ func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 				{{end}}
 				{{if istype . "bool"}}
 					if err := s.ReadBool(&v.{{fieldname .}}); err != nil {
+						return err
+					}
+				{{end}}
+				{{if istype . "*"}}
+					if err := New{{subtype .}}JSONScanDecoder(s).Decode(&v.{{fieldname .}}); err != nil {
 						return err
 					}
 				{{end}}

@@ -38,8 +38,20 @@ func getStructFields(spec *ast.TypeSpec) []*ast.Field {
 func isType(field *ast.Field, typ string) bool {
 	if ident, ok := field.Type.(*ast.Ident); ok {
 		return ident.Name == typ
+	} else if _, ok := field.Type.(*ast.StarExpr); ok {
+		return typ == "*"
 	}
 	return false
+}
+
+// getSubType returns the subtype of a pointer or array.
+func getSubType(field *ast.Field) string {
+	if star, ok := field.Type.(*ast.StarExpr); ok {
+		if ident, ok := star.X.(*ast.Ident); ok {
+			return ident.Name
+		}
+	}
+	return ""
 }
 
 // getFieldName returns the first name in a field.

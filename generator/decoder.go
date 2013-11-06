@@ -16,6 +16,7 @@ func init() {
 		"types": getTypeSpecs,
 		"fields": getStructFields,
 		"istype": isType,
+		"subtype": getSubType,
 		"fieldname": getFieldName,
 		"keyname": getJSONKeyName,
 	}
