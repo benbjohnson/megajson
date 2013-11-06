@@ -67,6 +67,11 @@ func getSubType(field *ast.Field) string {
 			return ident.Name
 		}
 	} else if typ, ok := field.Type.(*ast.ArrayType); ok {
+		if typ, ok := typ.Elt.(*ast.StarExpr); ok {
+			if ident, ok := typ.X.(*ast.Ident); ok {
+				return ident.Name
+			}
+		}
 		if ident, ok := typ.Elt.(*ast.Ident); ok {
 			return ident.Name
 		}

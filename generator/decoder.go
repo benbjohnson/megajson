@@ -41,7 +41,7 @@ func writeFileDecoder(w io.Writer, file *ast.File) error {
 		return err
 	}
 
-	fmt.Println("-----\n", string(bfmt), "\n-----")
+	// fmt.Println("-----\n", string(bfmt), "\n-----")
 
 	if _, err := w.Write(bfmt); err != nil {
 		return err

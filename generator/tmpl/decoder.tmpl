@@ -1,53 +1,3 @@
-{{define "decodeprimitive"}}
-	{{if istype . "string"}}
-		if err := s.ReadString(v); err != nil {
-			return err
-		}
-	{{end}}
-	{{if istype . "int"}}
-		if err := s.ReadInt(v); err != nil {
-			return err
-		}
-	{{end}}
-	{{if istype . "int64"}}
-		if err := s.ReadInt64(v); err != nil {
-			return err
-		}
-	{{end}}
-	{{if istype . "uint"}}
-		if err := s.ReadUint(v); err != nil {
-			return err
-		}
-	{{end}}
-	{{if istype . "uint64"}}
-		if err := s.ReadUint64(v); err != nil {
-			return err
-		}
-	{{end}}
-	{{if istype . "float32"}}
-		if err := s.ReadFloat32(v); err != nil {
-			return err
-		}
-	{{end}}
-	{{if istype . "float64"}}
-		if err := s.ReadFloat64(v); err != nil {
-			return err
-		}
-	{{end}}
-	{{if istype . "bool"}}
-		if err := s.ReadBool(v); err != nil {
-			return err
-		}
-	{{end}}
-{{end}}
-
-{{define "decodestar"}}
-	if err := New{{subtype .}}JSONScanDecoder(s).Decode(v); err != nil {
-		return err
-	}
-{{end}}
-
-
 package {{.Name.Name}}
 
 import (
@@ -72,10 +22,13 @@ func New{{.Name.Name}}JSONScanDecoder(s scanner.Scanner) *{{.Name.Name}}JSONDeco
 
 func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 	s := e.s
-	if tok, _, err := s.Scan(); err != nil {
+	if tok, tokval, err := s.Scan(); err != nil {
 		return err
+	} else if tok == scanner.TNULL {
+		*ptr = nil
+		return nil
 	} else if tok != scanner.TLBRACE {
-		return errors.New("Expected '{'")
+		return fmt.Errorf("Unexpected %s at %d: %s; expected '{'", scanner.TokenName(tok), s.Pos(), string(tokval))
 	}
 
 	// Create the object if it doesn't exist.
@@ -96,7 +49,7 @@ func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 			return nil
 		} else if tok == scanner.TCOMMA {
 			if index == 0 {
-				return fmt.Errorf("Unexpected comma")
+				return fmt.Errorf("Unexpected comma at %d", s.Pos())
 			}
 			if tok, tokval, err = s.Scan(); err != nil {
 				return err
@@ -104,7 +57,7 @@ func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 		}
 
 		if tok != scanner.TSTRING {
-			return fmt.Errorf("Unexpected %s: %s; expected '{' or string", scanner.TokenName(tok), string(tokval))
+			return fmt.Errorf("Unexpected %s at %d: %s; expected '{' or string", scanner.TokenName(tok), s.Pos(), string(tokval))
 		} else {
 			key = string(tokval)
 		}
@@ -113,26 +66,69 @@ func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 		if tok, tokval, err := s.Scan(); err != nil {
 			return err
 		} else if tok != scanner.TCOLON {
-			return fmt.Errorf("Unexpected %s: %s; expected colon", scanner.TokenName(tok), string(tokval))
+			return fmt.Errorf("Unexpected %s at %d: %s; expected colon", scanner.TokenName(tok), s.Pos(), string(tokval))
 		}
 
-		{
-			switch key {
-			{{range fields .}}
-				{{if keyname .}}
-				case {{keyname . | printf "%q"}}:
-					{{if isprimitivetype .}}
-						v := &v.{{fieldname .}}
-						{{template "decodeprimitive" .}}
-					{{end}}
+		switch key {
+		{{range fields .}}
+			{{if keyname .}}
+			case {{keyname . | printf "%q"}}:
+				v := &v.{{fieldname .}}
 
-					{{if istype . "*"}}
-						v := &v.{{fieldname .}}
-						{{template "decodestar" .}}
+				{{if isprimitivetype .}}
+					{{if istype . "string"}}
+						if err := s.ReadString(v); err != nil {
+							return err
+						}
+					{{end}}
+					{{if istype . "int"}}
+						if err := s.ReadInt(v); err != nil {
+							return err
+						}
+					{{end}}
+					{{if istype . "int64"}}
+						if err := s.ReadInt64(v); err != nil {
+							return err
+						}
+					{{end}}
+					{{if istype . "uint"}}
+						if err := s.ReadUint(v); err != nil {
+							return err
+						}
+					{{end}}
+					{{if istype . "uint64"}}
+						if err := s.ReadUint64(v); err != nil {
+							return err
+						}
+					{{end}}
+					{{if istype . "float32"}}
+						if err := s.ReadFloat32(v); err != nil {
+							return err
+						}
+					{{end}}
+					{{if istype . "float64"}}
+						if err := s.ReadFloat64(v); err != nil {
+							return err
+						}
+					{{end}}
+					{{if istype . "bool"}}
+						if err := s.ReadBool(v); err != nil {
+							return err
+						}
 					{{end}}
 				{{end}}
+				{{if istype . "*"}}
+					if err := New{{subtype .}}JSONScanDecoder(s).Decode(v); err != nil {
+						return err
+					}
+				{{end}}
+				{{if istype . "[]"}}
+					if err := New{{subtype .}}JSONScanDecoder(s).DecodeArray(v); err != nil {
+						return err
+					}
+				{{end}}
 			{{end}}
-			}
+		{{end}}
 		}
 
 		index++
@@ -141,5 +137,43 @@ func (e *{{.Name.Name}}JSONDecoder) Decode(ptr **{{.Name.Name}}) error {
 	return nil
 }
 
+func (e *{{.Name.Name}}JSONDecoder) DecodeArray(ptr *[]*{{.Name.Name}}) error {
+	s := e.s
+	if tok, _, err := s.Scan(); err != nil {
+		return err
+	} else if tok != scanner.TLBRACKET {
+		return errors.New("Expected '['")
+	}
+
+	slice := make([]*{{.Name.Name}}, 0)
+
+	// Loop over items.
+	index := 0
+	for {
+		tok, tokval, err := s.Scan()
+		if err != nil {
+			return err
+		} else if tok == scanner.TRBRACKET {
+			*ptr = slice
+			return nil
+		} else if tok == scanner.TCOMMA {
+			if index == 0 {
+				return fmt.Errorf("Unexpected comma in array at %d", s.Pos())
+			}
+			if tok, tokval, err = s.Scan(); err != nil {
+				return err
+			}
+		}
+		s.Unscan(tok, tokval)
+
+		item := &{{.Name.Name}}{}
+		if err := e.Decode(&item); err != nil {
+			return err
+		}
+		slice = append(slice, item)
+
+		index++
+	}
+}
 
 {{end}}

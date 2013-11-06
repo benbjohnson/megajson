@@ -34,7 +34,7 @@ func TestGenerateDecodeSimple(t *testing.T) {
 func TestGenerateDecodeNested(t *testing.T) {
 	out, err := runDecodingFixture("decode/nested")
 	assert.NoError(t, err)
-	assert.Equal(t, out, `|foo|John|20|`)
+	assert.Equal(t, out, `|foo|John|20|<nil>|2|Jane|60|Jack|-13|`)
 }
 
 func runDecodingFixture(name string) (ret string, err error) {

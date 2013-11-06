@@ -10,7 +10,9 @@ import (
 
 // Scanner is a tokenizer for JSON input from an io.Reader.
 type Scanner interface {
+	Pos() int
 	Scan() (int, []byte, error)
+	Unscan(tok int, b []byte)
 	ReadString(target *string) error
 	ReadInt(target *int) error
 	ReadInt64(target *int64) error
@@ -24,6 +26,12 @@ type Scanner interface {
 type scanner struct {
 	r *bufio.Reader
 	c rune
+	pos int
+	buf struct{
+		tok int
+		b   []byte
+		err error
+	}
 }
 
 // NewScanner initializes a new scanner with a given reader.
@@ -32,10 +40,18 @@ func NewScanner(r io.Reader) Scanner {
 	return s
 }
 
+// Pos returns the current character position of the scanner.
+func (s *scanner) Pos() int {
+	return s.pos
+}
+
 // read retrieves the next rune from the reader.
 func (s *scanner) read() error {
 	var err error
 	s.c, _, err = s.r.ReadRune()
+	if err == nil {
+		s.pos++
+	}
 	return err
 }
 
@@ -56,6 +72,12 @@ func (s *scanner) expect(c rune) error {
 
 // Scan returns the next JSON token from the reader.
 func (s *scanner) Scan() (int, []byte, error) {
+	if s.buf.tok != 0 {
+		tok, b := s.buf.tok, s.buf.b
+		s.buf.tok, s.buf.b = 0, nil
+		return tok, b, nil
+	}
+
 	for {
 		if err := s.read(); err != nil {
 			return 0, nil, err
@@ -69,7 +91,7 @@ func (s *scanner) Scan() (int, []byte, error) {
 		case '[':
 			return TLBRACKET, []byte{'['}, nil
 		case ']':
-			return TLBRACKET, []byte{']'}, nil
+			return TRBRACKET, []byte{']'}, nil
 		case ':':
 			return TCOLON, []byte{':'}, nil
 		case ',':
@@ -88,6 +110,14 @@ func (s *scanner) Scan() (int, []byte, error) {
 			return s.scanNumber()
 		}
 	}
+}
+
+// Unscan adds a token and byte array back onto the buffer to be read
+// on the next call to Scan().
+func (s *scanner) Unscan(tok int, b []byte) {
+	s.buf.tok = tok
+	s.buf.b = b
+	s.pos--
 }
 
 // scanNumber reads a JSON number from the reader.
@@ -261,7 +291,7 @@ func (s *scanner) ReadString(target *string) error {
 	case TNUMBER, TTRUE, TFALSE, TNULL:
 		*target = ""
 	default:
-		return fmt.Errorf("Unexpected %s: %s; expected string", TokenName(tok), string(b))
+		return fmt.Errorf("Unexpected %s at %d: %s; expected string", TokenName(tok), s.pos, string(b))
 	}
 	return nil
 }
@@ -279,7 +309,7 @@ func (s *scanner) ReadInt(target *int) error {
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0
 	default:
-		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+		return fmt.Errorf("Unexpected %s at %d: %s; expected number", TokenName(tok), s.pos, string(b))
 	}
 	return nil
 }
@@ -297,7 +327,7 @@ func (s *scanner) ReadInt64(target *int64) error {
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0
 	default:
-		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+		return fmt.Errorf("Unexpected %s at %d: %s; expected number", TokenName(tok), s.pos, string(b))
 	}
 	return nil
 }
@@ -316,7 +346,7 @@ func (s *scanner) ReadUint(target *uint) error {
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0
 	default:
-		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+		return fmt.Errorf("Unexpected %s at %d: %s; expected number", TokenName(tok), s.pos, string(b))
 	}
 	return nil
 }
@@ -334,7 +364,7 @@ func (s *scanner) ReadUint64(target *uint64) error {
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0
 	default:
-		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+		return fmt.Errorf("Unexpected %s at %d: %s; expected number", TokenName(tok), s.pos, string(b))
 	}
 	return nil
 }
@@ -352,7 +382,7 @@ func (s *scanner) ReadFloat32(target *float32) error {
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0
 	default:
-		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+		return fmt.Errorf("Unexpected %s at %d: %s; expected number", TokenName(tok), s.pos, string(b))
 	}
 	return nil
 }
@@ -370,7 +400,7 @@ func (s *scanner) ReadFloat64(target *float64) error {
 	case TSTRING, TTRUE, TFALSE, TNULL:
 		*target = 0
 	default:
-		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+		return fmt.Errorf("Unexpected %s at %d: %s; expected number", TokenName(tok), s.pos, string(b))
 	}
 	return nil
 }
@@ -387,7 +417,7 @@ func (s *scanner) ReadBool(target *bool) error {
 	case TFALSE, TSTRING, TNUMBER, TNULL:
 		*target = false
 	default:
-		return fmt.Errorf("Unexpected %s: %s; expected number", TokenName(tok), string(b))
+		return fmt.Errorf("Unexpected %s at %d: %s; expected number", TokenName(tok), s.pos, string(b))
 	}
 	return nil
 }
