@@ -24,6 +24,7 @@ var hex = "0123456789abcdef"
 type Encoder interface {
 	Flush() error
 	WriteString(string) error
+	WriteByte(byte) error
 	WriteInt(int) error
 	WriteInt64(int64) error
 	WriteUint(uint) error
@@ -55,22 +56,34 @@ func (e *encoder) Flush() error {
 	return nil
 }
 
+// check verifies there is space in the buffer.
+func (e *encoder) check() error {
+	if e.pos > actualBufSize {
+		return e.Flush();
+	}
+	return nil
+}
+
 // writeByte writes a single byte to the buffer and increments the position.
 func (e *encoder) writeByte(c byte) {
 	e.buf[e.pos] = c
 	e.pos++
 }
 
-// writeBytes writes a byte array to the buffer and increments the position.
-func (e *encoder) writeBytes(b []byte) {
-	copy(e.buf[e.pos:], b)
-	e.pos += len(b)
-}
-
-// writeBytes writes a string to the buffer and increments the position.
+// writeString writes a string to the buffer and increments the position.
 func (e *encoder) writeString(s string) {
 	copy(e.buf[e.pos:], s)
 	e.pos += len(s)
+}
+
+// WriteByte writes a single byte.
+func (e *encoder) WriteByte(c byte) error {
+	if err := e.check(); err != nil {
+		return err
+	}
+	e.buf[e.pos] = c
+	e.pos++
+	return nil
 }
 
 // WriteString writes a JSON string to the writer. Parts of this function are
@@ -165,10 +178,8 @@ func (e *encoder) WriteInt(v int) error {
 
 // WriteInt64 encodes and writes a 64-bit integer.
 func (e *encoder) WriteInt64(v int64) error {
-	if e.pos > actualBufSize {
-		if err := e.Flush(); err != nil {
-			return err
-		}
+	if err := e.check(); err != nil {
+		return err
 	}
 
 	buf := strconv.AppendInt(e.buf[e.pos:e.pos], v, 10)
@@ -183,10 +194,8 @@ func (e *encoder) WriteUint(v uint) error {
 
 // WriteUint encodes and writes an unsigned integer.
 func (e *encoder) WriteUint64(v uint64) error {
-	if e.pos > actualBufSize {
-		if err := e.Flush(); err != nil {
-			return err
-		}
+	if err := e.check(); err != nil {
+		return err
 	}
 
 	buf := strconv.AppendUint(e.buf[e.pos:e.pos], v, 10)
@@ -196,10 +205,8 @@ func (e *encoder) WriteUint64(v uint64) error {
 
 // WriteFloat32 encodes and writes a 32-bit float.
 func (e *encoder) WriteFloat32(v float32) error {
-	if e.pos > actualBufSize {
-		if err := e.Flush(); err != nil {
-			return err
-		}
+	if err := e.check(); err != nil {
+		return err
 	}
 	buf := strconv.AppendFloat(e.buf[e.pos:e.pos], float64(v), 'g', -1, 32)
 	e.pos += len(buf)
@@ -208,12 +215,23 @@ func (e *encoder) WriteFloat32(v float32) error {
 
 // WriteFloat64 encodes and writes a 64-bit float.
 func (e *encoder) WriteFloat64(v float64) error {
-	if e.pos > actualBufSize {
-		if err := e.Flush(); err != nil {
-			return err
-		}
+	if err := e.check(); err != nil {
+		return err
 	}
 	buf := strconv.AppendFloat(e.buf[e.pos:e.pos], v, 'g', -1, 64)
 	e.pos += len(buf)
+	return nil
+}
+
+// WriteNull writes "null".
+func (e *encoder) WriteNull() error {
+	if err := e.check(); err != nil {
+		return err
+	}
+	e.buf[e.pos+0] = 'n'
+	e.buf[e.pos+1] = 'u'
+	e.buf[e.pos+2] = 'l'
+	e.buf[e.pos+3] = 'l'
+	e.pos += 4
 	return nil
 }

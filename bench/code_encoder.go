@@ -15,7 +15,7 @@ func NewcodeResponseJSONEncoder(w io.Writer) *codeResponseJSONEncoder {
 
 func (e *codeResponseJSONEncoder) Encode(v *codeResponse) error {
 	if v == nil {
-		return encoder.WriteBytes(e.w, []byte(`null`))
+		return encoder.WriteNull(e.w)
 	}
 
 	if err := encoder.WriteByte(e.w, '{'); err != nil {
@@ -58,7 +58,7 @@ func NewcodeNodeJSONEncoder(w io.Writer) *codeNodeJSONEncoder {
 
 func (e *codeNodeJSONEncoder) Encode(v *codeNode) error {
 	if v == nil {
-		return encoder.WriteBytes(e.w, []byte(`null`))
+		return encoder.WriteNull(e.w)
 	}
 
 	if err := encoder.WriteByte(e.w, '{'); err != nil {
