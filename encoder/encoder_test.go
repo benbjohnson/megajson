@@ -234,3 +234,24 @@ func BenchmarkWriteBool(b *testing.B) {
 	e.Flush()
 	b.SetBytes(int64(len(`true`)))
 }
+
+// Ensures that a null value can be written.
+func TestWriteNull(t *testing.T) {
+	var b bytes.Buffer
+	e := NewEncoder(&b)
+	assert.NoError(t, e.WriteNull())
+	assert.NoError(t, e.Flush())
+	assert.Equal(t, b.String(), `null`)
+}
+
+func BenchmarkWriteNull(b *testing.B) {
+	var buf bytes.Buffer
+	e := NewEncoder(&buf)
+	for i := 0; i < b.N; i++ {
+		if err := e.WriteNull(); err != nil {
+			b.Fatal("WriteNull:", err)
+		}
+	}
+	e.Flush()
+	b.SetBytes(int64(len(`true`)))
+}
