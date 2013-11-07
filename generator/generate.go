@@ -2,6 +2,7 @@ package generator
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -21,7 +22,9 @@ func Generate(root string, options *Options) error {
 
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		// Only go file are used for generation.
-		if info.IsDir() || filepath.Ext(path) != ".go" {
+		if info == nil {
+			return fmt.Errorf("File not found: %s", path)
+		} else if info.IsDir() || filepath.Ext(path) != ".go" {
 			return nil
 		}
 
