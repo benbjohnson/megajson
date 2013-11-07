@@ -12,10 +12,10 @@ const (
 	maxByteEncodeSize = 6
 
 	// The size, in bytes, that can be encoded at a time.
-	bufSize = 4096
+	bufSize = 16384
 
 	// The max size, in bytes, that an encoded value can be.
-	actualBufSize = (4096 * maxByteEncodeSize)
+	actualBufSize = (bufSize * maxByteEncodeSize)
 )
 
 var hex = "0123456789abcdef"
