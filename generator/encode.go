@@ -17,7 +17,7 @@ func writeFileEncoder(w io.Writer, file *ast.File) error {
 	fmt.Fprintf(&b, "package %s\n", file.Name.Name)
 	fmt.Fprintf(&b, "import (\n")
 	fmt.Fprintf(&b, "\"io\"\n")
-	fmt.Fprintf(&b, "\"github.com/benbjohnson/megajson/encoding\"\n")
+	fmt.Fprintf(&b, "\"github.com/benbjohnson/megajson/encoder\"\n")
 	fmt.Fprintf(&b, ")\n")
 
 	// Loop over each spec and create a encoder.
@@ -83,9 +83,9 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 
 	// Generate the encode function.
 	fmt.Fprintf(&b, "func (e *%sJSONEncoder) Encode(v *%s) error {\n", name, name)
-	fmt.Fprintf(&b, "if v == nil {\nreturn encoding.WriteBytes(e.w, []byte(`null`))\n}\n\n")
+	fmt.Fprintf(&b, "if v == nil {\nreturn encoder.WriteBytes(e.w, []byte(`null`))\n}\n\n")
 
-	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '{'); err != nil {\nreturn err\n}\n")
+	fmt.Fprintf(&b, "if err := encoder.WriteByte(e.w, '{'); err != nil {\nreturn err\n}\n")
 
 	index := 0
 	for _, field := range structType.Fields.List {
@@ -95,7 +95,7 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 			if err := writeFieldEncoding(&buf, name.Name, field); buf.Len() > 0 {
 				// Write separating comma after the first field.
 				if index > 0 {
-					fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, ','); err != nil {\nreturn err\n}\n")
+					fmt.Fprintf(&b, "if err := encoder.WriteByte(e.w, ','); err != nil {\nreturn err\n}\n")
 				}
 
 				// Copy over to main buffer.
@@ -108,7 +108,7 @@ func writeTypeEncoder(w io.Writer, typeSpec *ast.TypeSpec) error {
 		}
 	}
 
-	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '}'); err != nil {\nreturn err\n}\n")
+	fmt.Fprintf(&b, "if err := encoder.WriteByte(e.w, '}'); err != nil {\nreturn err\n}\n")
 	fmt.Fprintf(&b, "return nil\n")
 	fmt.Fprintf(&b, "}\n")
 
@@ -158,8 +158,8 @@ func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 		return err
 	}
 
-	fmt.Fprintf(w, "if err := encoding.WriteString(e.w, %s); err != nil {\nreturn err\n}\n", strconv.Quote(key))
-	fmt.Fprintf(w, "if err := encoding.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
+	fmt.Fprintf(w, "if err := encoder.WriteString(e.w, %s); err != nil {\nreturn err\n}\n", strconv.Quote(key))
+	fmt.Fprintf(w, "if err := encoder.WriteByte(e.w, ':'); err != nil {\nreturn err\n}\n")
 	b.WriteTo(w)
 
 	return nil
@@ -169,21 +169,21 @@ func writeFieldEncoding(w io.Writer, name string, f *ast.Field) error {
 func writePrimativeFieldEncoding(w io.Writer, varname string, typ *ast.Ident, tag string) error {
 	switch typ.Name {
 	case "string":
-		fmt.Fprintf(w, "if err := encoding.WriteString(e.w, %s); err != nil {\nreturn err\n}\n", varname)
+		fmt.Fprintf(w, "if err := encoder.WriteString(e.w, %s); err != nil {\nreturn err\n}\n", varname)
 	case "int":
-		fmt.Fprintf(w, "if err := encoding.WriteInt(e.w, %s); err != nil {\nreturn err\n}\n", varname)
+		fmt.Fprintf(w, "if err := encoder.WriteInt(e.w, %s); err != nil {\nreturn err\n}\n", varname)
 	case "int64":
-		fmt.Fprintf(w, "if err := encoding.WriteInt64(e.w, %s); err != nil {\nreturn err\n}\n", varname)
+		fmt.Fprintf(w, "if err := encoder.WriteInt64(e.w, %s); err != nil {\nreturn err\n}\n", varname)
 	case "uint":
-		fmt.Fprintf(w, "if err := encoding.WriteUint(e.w, %s); err != nil {\nreturn err\n}\n", varname)
+		fmt.Fprintf(w, "if err := encoder.WriteUint(e.w, %s); err != nil {\nreturn err\n}\n", varname)
 	case "uint64":
-		fmt.Fprintf(w, "if err := encoding.WriteUint64(e.w, %s); err != nil {\nreturn err\n}\n", varname)
+		fmt.Fprintf(w, "if err := encoder.WriteUint64(e.w, %s); err != nil {\nreturn err\n}\n", varname)
 	case "float32":
-		fmt.Fprintf(w, "if err := encoding.WriteFloat32(e.w, %s); err != nil {\nreturn err\n}\n", varname)
+		fmt.Fprintf(w, "if err := encoder.WriteFloat32(e.w, %s); err != nil {\nreturn err\n}\n", varname)
 	case "float64":
-		fmt.Fprintf(w, "if err := encoding.WriteFloat64(e.w, %s); err != nil {\nreturn err\n}\n", varname)
+		fmt.Fprintf(w, "if err := encoder.WriteFloat64(e.w, %s); err != nil {\nreturn err\n}\n", varname)
 	case "bool":
-		fmt.Fprintf(w, "if err := encoding.WriteBool(e.w, %s); err != nil {\nreturn err\n}\n", varname)
+		fmt.Fprintf(w, "if err := encoder.WriteBool(e.w, %s); err != nil {\nreturn err\n}\n", varname)
 	default:
 		return unsupportedTypeError
 	}
@@ -206,10 +206,10 @@ func writePointerFieldEncoding(w io.Writer, varname string, typ *ast.StarExpr, t
 func writeArrayFieldEncoding(w io.Writer, varname string, typ *ast.ArrayType, tag string) error {
 	var b bytes.Buffer
 
-	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, '['); err != nil {\nreturn err\n}\n")
+	fmt.Fprintf(&b, "if err := encoder.WriteByte(e.w, '['); err != nil {\nreturn err\n}\n")
 
 	fmt.Fprintf(&b, "for index, elem := range %s {", varname)
-	fmt.Fprintf(&b, "if index > 0 { if err := encoding.WriteByte(e.w, ','); err != nil { return err } } \n")
+	fmt.Fprintf(&b, "if index > 0 { if err := encoder.WriteByte(e.w, ','); err != nil { return err } } \n")
 
 	switch elt := typ.Elt.(type) {
 	case *ast.Ident:
@@ -227,7 +227,7 @@ func writeArrayFieldEncoding(w io.Writer, varname string, typ *ast.ArrayType, ta
 	}
 
 	fmt.Fprintf(&b, "}\n")
-	fmt.Fprintf(&b, "if err := encoding.WriteByte(e.w, ']'); err != nil {\nreturn err\n}\n")
+	fmt.Fprintf(&b, "if err := encoder.WriteByte(e.w, ']'); err != nil {\nreturn err\n}\n")
 
 	_, err := b.WriteTo(w)
 	return err
