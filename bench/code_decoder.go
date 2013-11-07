@@ -88,8 +88,6 @@ func (e *codeResponseJSONDecoder) Decode(ptr **codeResponse) error {
 
 		index++
 	}
-
-	return nil
 }
 
 func (e *codeResponseJSONDecoder) DecodeArray(ptr *[]*codeResponse) error {
@@ -247,8 +245,6 @@ func (e *codeNodeJSONDecoder) Decode(ptr **codeNode) error {
 
 		index++
 	}
-
-	return nil
 }
 
 func (e *codeNodeJSONDecoder) DecodeArray(ptr *[]*codeNode) error {
