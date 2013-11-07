@@ -23,7 +23,8 @@ func TestWriteStringLarge(t *testing.T) {
 		input += "\t"
 		expected += `\u0009`
 	}
-	expected = "\"" + expected + "\""
+	input += "X"
+	expected = "\"" + expected + "X\""
 
 	var b bytes.Buffer
 	e := NewEncoder(&b)
@@ -51,9 +52,27 @@ func TestWriteStringLargeUnicode(t *testing.T) {
 	e.Flush()
 	assert.NoError(t, err)
 	assert.Equal(t, len(expected), len(b.String()))
-	//if err == nil && len(expected) == len(b.String()) {
+	if err == nil && len(expected) == len(b.String()) {
 		assert.Equal(t, expected, b.String())
-	//}
+	}
+}
+
+// Ensures that a multiple strings can be encoded sequentially and share the same buffer.
+func TestWriteMultipleStrings(t *testing.T) {
+	var b bytes.Buffer
+	var expected string
+	e := NewEncoder(&b)
+
+	for i := 0; i < 10000; i++ {
+		err := e.WriteString("foo\t\n\r\"大\t")
+		assert.NoError(t, err)
+		expected += `"foo\u0009\n\r\"大\u0009"`
+	}
+	e.Flush()
+	assert.Equal(t, len(expected), len(b.String()))
+	if len(expected) == len(b.String()) {
+		assert.Equal(t, expected, b.String())
+	}
 }
 
 // Ensures that a blank string can be encoded.

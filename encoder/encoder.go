@@ -14,7 +14,7 @@ const (
 	bufSize = 4096
 
 	// The max size, in bytes, that an encoded value can be.
-	actualBufSize = (4096 * maxByteEncodeSize) + 64
+	actualBufSize = (4096 * maxByteEncodeSize)
 )
 
 // Encoder is an interface for the low-level JSON encoder.
@@ -26,7 +26,7 @@ type Encoder interface {
 type encoder struct {
 	w io.Writer
 	scratch [64]byte
-	buf [actualBufSize]byte
+	buf [actualBufSize + 64]byte
 	pos int
 }
 
@@ -64,14 +64,17 @@ func (e *encoder) writeString(s string) {
 // WriteString writes a JSON string to the writer. Parts of this function are
 // borrowed from the encoding/json package.
 func (e *encoder) WriteString(v string) error {
+	bufsz := (actualBufSize - e.pos) / maxByteEncodeSize
+
 	e.writeByte('"')
-	for i := 0; i < len(v); i += bufSize {
+	for i := 0; i < len(v); i += bufsz {
 		if i > 0 {
+			bufsz = bufSize
 			e.Flush()
 		}
 
 		// Extract substring.
-		end := i + bufSize
+		end := i + bufsz
 		if end > len(v) {
 			end = len(v)
 		}
@@ -128,9 +131,9 @@ func (e *encoder) WriteString(v string) error {
 			j += size
 
 			// If we cross the buffer end then adjust the outer loop
-			if j > bufSize {
-				i += j - bufSize
-				sublen += j - bufSize
+			if j > bufsz {
+				i += j - bufsz
+				sublen += j - bufsz
 			}
 		}
 		if prev < sublen {
