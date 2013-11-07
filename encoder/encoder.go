@@ -28,6 +28,8 @@ type Encoder interface {
 	WriteInt64(int64) error
 	WriteUint(uint) error
 	WriteUint64(uint64) error
+	WriteFloat32(float32) error
+	WriteFloat64(float64) error
 }
 
 type encoder struct {
@@ -188,6 +190,30 @@ func (e *encoder) WriteUint64(v uint64) error {
 	}
 
 	buf := strconv.AppendUint(e.buf[e.pos:e.pos], v, 10)
+	e.pos += len(buf)
+	return nil
+}
+
+// WriteFloat32 encodes and writes a 32-bit float.
+func (e *encoder) WriteFloat32(v float32) error {
+	if e.pos > actualBufSize {
+		if err := e.Flush(); err != nil {
+			return err
+		}
+	}
+	buf := strconv.AppendFloat(e.buf[e.pos:e.pos], float64(v), 'g', -1, 32)
+	e.pos += len(buf)
+	return nil
+}
+
+// WriteFloat64 encodes and writes a 64-bit float.
+func (e *encoder) WriteFloat64(v float64) error {
+	if e.pos > actualBufSize {
+		if err := e.Flush(); err != nil {
+			return err
+		}
+	}
+	buf := strconv.AppendFloat(e.buf[e.pos:e.pos], v, 'g', -1, 64)
 	e.pos += len(buf)
 	return nil
 }
