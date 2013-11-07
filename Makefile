@@ -16,9 +16,15 @@ generator/decoder_tmpl.go: generator/tmpl/decoder.tmpl
 
 .PHONY: assets
 
-bench:
-	go run main.go -- test/code.go
+bench: benchpreq
 	go test -v -test.bench=. ./test
+
+bench-cpuprofile: benchpreq
+	go test -v -test.bench=. -test.cpuprofile=test/cpu.out ./test
+	go tool pprof test/cpu.out
+
+benchpreq:
+	go run main.go -- test/code.go
 
 cloc:
 	cloc --not-match-f=_test.go --not-match-d=test .
