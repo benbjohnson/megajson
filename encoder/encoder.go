@@ -31,6 +31,8 @@ type Encoder interface {
 	WriteUint64(uint64) error
 	WriteFloat32(float32) error
 	WriteFloat64(float64) error
+	WriteBool(bool) error
+	WriteNull() error
 }
 
 type encoder struct {
@@ -220,6 +222,28 @@ func (e *encoder) WriteFloat64(v float64) error {
 	}
 	buf := strconv.AppendFloat(e.buf[e.pos:e.pos], v, 'g', -1, 64)
 	e.pos += len(buf)
+	return nil
+}
+
+// WriteBool writes a boolean.
+func (e *encoder) WriteBool(v bool) error {
+	if err := e.check(); err != nil {
+		return err
+	}
+	if v {
+		e.buf[e.pos+0] = 't'
+		e.buf[e.pos+1] = 'r'
+		e.buf[e.pos+2] = 'u'
+		e.buf[e.pos+3] = 'e'
+		e.pos += 4
+	} else {
+		e.buf[e.pos+0] = 'f'
+		e.buf[e.pos+1] = 'a'
+		e.buf[e.pos+2] = 'l'
+		e.buf[e.pos+3] = 's'
+		e.buf[e.pos+4] = 'e'
+		e.pos += 5
+	}
 	return nil
 }
 
