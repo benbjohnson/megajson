@@ -12,7 +12,7 @@ func TestWriteString(t *testing.T) {
 	var b bytes.Buffer
 	e := NewEncoder(&b)
 	e.WriteString("foo\t\n\r\"大")
-	e.Flush()
+	assert.NoError(t, e.Flush())
 	assert.Equal(t, `"foo\u0009\n\r\"大"`, b.String())
 }
 
@@ -29,7 +29,7 @@ func TestWriteStringLarge(t *testing.T) {
 	var b bytes.Buffer
 	e := NewEncoder(&b)
 	err := e.WriteString(input)
-	e.Flush()
+	assert.NoError(t, e.Flush())
 	assert.NoError(t, err)
 	assert.Equal(t, len(expected), len(b.String()))
 	if err == nil && len(expected) == len(b.String()) {
@@ -49,7 +49,7 @@ func TestWriteStringLargeUnicode(t *testing.T) {
 	var b bytes.Buffer
 	e := NewEncoder(&b)
 	err := e.WriteString(input)
-	e.Flush()
+	assert.NoError(t, e.Flush())
 	assert.NoError(t, err)
 	assert.Equal(t, len(expected), len(b.String()))
 	if err == nil && len(expected) == len(b.String()) {
@@ -68,7 +68,7 @@ func TestWriteMultipleStrings(t *testing.T) {
 		assert.NoError(t, err)
 		expected += `"foo\u0009\n\r\"大\u0009"`
 	}
-	e.Flush()
+	assert.NoError(t, e.Flush())
 	assert.Equal(t, len(expected), len(b.String()))
 	if len(expected) == len(b.String()) {
 		assert.Equal(t, expected, b.String())
@@ -80,7 +80,7 @@ func TestWriteBlankString(t *testing.T) {
 	var b bytes.Buffer
 	e := NewEncoder(&b)
 	e.WriteString("")
-	e.Flush()
+	assert.NoError(t, e.Flush())
 	assert.Equal(t, b.String(), `""`)
 }
 

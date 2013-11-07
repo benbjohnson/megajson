@@ -3,6 +3,7 @@ package encoder
 import (
 	"encoding/json"
 	"io"
+	"strconv"
 	"unicode/utf8"
 )
 
@@ -17,10 +18,16 @@ const (
 	actualBufSize = (4096 * maxByteEncodeSize)
 )
 
+var hex = "0123456789abcdef"
+
 // Encoder is an interface for the low-level JSON encoder.
 type Encoder interface {
-	Flush()
+	Flush() error
 	WriteString(string) error
+	WriteInt(int) error
+	WriteInt64(int64) error
+	WriteUint(uint) error
+	WriteUint64(uint64) error
 }
 
 type encoder struct {
@@ -36,11 +43,14 @@ func NewEncoder(w io.Writer) Encoder {
 }
 
 // Flush writes all data in the buffer to the writer.
-func (e *encoder) Flush() {
+func (e *encoder) Flush() error {
 	if e.pos > 0 {
-		e.w.Write(e.buf[0:e.pos])
+		if _, err := e.w.Write(e.buf[0:e.pos]); err != nil {
+			return err
+		}
 		e.pos = 0
 	}
+	return nil
 }
 
 // writeByte writes a single byte to the buffer and increments the position.
@@ -70,7 +80,9 @@ func (e *encoder) WriteString(v string) error {
 	for i := 0; i < len(v); i += bufsz {
 		if i > 0 {
 			bufsz = bufSize
-			e.Flush()
+			if err := e.Flush(); err != nil {
+				return err
+			}
 		}
 
 		// Extract substring.
@@ -141,5 +153,41 @@ func (e *encoder) WriteString(v string) error {
 		}
 	}
 	e.writeByte('"')
+	return nil
+}
+
+// WriteInt encodes and writes an integer.
+func (e *encoder) WriteInt(v int) error {
+	return e.WriteInt64(int64(v))
+}
+
+// WriteInt64 encodes and writes a 64-bit integer.
+func (e *encoder) WriteInt64(v int64) error {
+	if e.pos > actualBufSize {
+		if err := e.Flush(); err != nil {
+			return err
+		}
+	}
+
+	buf := strconv.AppendInt(e.buf[e.pos:e.pos], v, 10)
+	e.pos += len(buf)
+	return nil
+}
+
+// WriteUint encodes and writes an unsigned integer.
+func (e *encoder) WriteUint(v uint) error {
+	return e.WriteUint64(uint64(v))
+}
+
+// WriteUint encodes and writes an unsigned integer.
+func (e *encoder) WriteUint64(v uint64) error {
+	if e.pos > actualBufSize {
+		if err := e.Flush(); err != nil {
+			return err
+		}
+	}
+
+	buf := strconv.AppendUint(e.buf[e.pos:e.pos], v, 10)
+	e.pos += len(buf)
 	return nil
 }
