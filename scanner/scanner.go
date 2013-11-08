@@ -1,11 +1,16 @@
 package scanner
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"strconv"
+	"unicode/utf8"
+)
+
+const (
+	// The size, in bytes, that is read from the reader at a time.
+	bufSize = 4096
 )
 
 // Scanner is a tokenizer for JSON input from an io.Reader.
@@ -24,9 +29,13 @@ type Scanner interface {
 }
 
 type scanner struct {
-	r *bufio.Reader
+	r io.Reader
 	c rune
+	buf [bufSize]byte
+	buflen int
+	idx int
 	pos int
+	tmpc rune
 	tmp struct{
 		tok int
 		b   []byte
@@ -36,28 +45,60 @@ type scanner struct {
 
 // NewScanner initializes a new scanner with a given reader.
 func NewScanner(r io.Reader) Scanner {
-	s := &scanner{r:bufio.NewReader(r)}
+	s := &scanner{r:r, buflen:-1}
 	return s
 }
 
-// Pos returns the current character position of the scanner.
+// Pos returns the current rune position of the scanner.
 func (s *scanner) Pos() int {
 	return s.pos
 }
 
 // read retrieves the next rune from the reader.
 func (s *scanner) read() error {
-	var err error
-	s.c, _, err = s.r.ReadRune()
-	if err == nil {
-		s.pos++
+	if s.tmpc > 0 {
+		s.c = s.tmpc
+		s.tmpc = 0
+		return nil
 	}
-	return err
+
+	// Read from the reader if the buffer is empty.
+	if s.idx >= s.buflen {
+		var err error
+		if s.buflen, err = s.r.Read(s.buf[0:]); err != nil {
+			return err
+		}
+		s.idx = 0
+	}
+
+	// Read a single byte and then determine if utf8 decoding is needed.
+	b := s.buf[s.idx]
+	if b < utf8.RuneSelf {
+		s.c = rune(b)
+		s.idx++
+	} else {
+		// Read a new buffer if we don't have at least the max size of a UTF8 character.
+		if s.idx + utf8.UTFMax >= s.buflen {
+			s.buf[0] = b
+			var err error
+			if s.buflen, err = s.r.Read(s.buf[1:]); err != nil {
+				return err
+			}
+			s.buflen += 1
+		}
+		
+		var size int
+		s.c, size = utf8.DecodeRune(s.buf[s.idx:])
+		s.idx += size
+	}
+
+	s.pos++
+	return nil
 }
 
 // unread places the current rune back on the reader.
-func (s *scanner) unread() error {
-	return s.r.UnreadRune()
+func (s *scanner) unread() {
+	s.tmpc = s.c
 }
 
 // expect reads the next rune and checks that it matches.
@@ -141,9 +182,7 @@ func (s *scanner) scanNumber() (int, []byte, error) {
 	if err := s.read(); err != nil {
 		return 0, nil, err
 	} else if s.c != '.' {
-		if err := s.unread(); err != nil {
-			return 0, nil, err
-		}
+		s.unread()
 		return TNUMBER, b.Bytes(), nil
 	}
 	b.WriteByte('.')
@@ -175,9 +214,7 @@ func (s *scanner) scanDigits(b *bytes.Buffer) (int, error) {
 			}
 			count++
 		} else {
-			if err := s.unread(); err != nil {
-				return 0, err
-			}
+			s.unread()
 			return count-1, nil
 		}
 	}
