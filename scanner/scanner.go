@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -164,59 +163,63 @@ func (s *scanner) Unscan(tok int, b []byte) {
 
 // scanNumber reads a JSON number from the reader.
 func (s *scanner) scanNumber() (int, []byte, error) {
-	var b bytes.Buffer
+	var n int
+
 	if s.c == '-' {
-		b.WriteRune('-')
+		s.scratch[n] = '-'
+		n++
 		if err := s.read(); err != nil {
 			return 0, nil, err
 		}
 	}
 
 	// Read whole number.
-	if _, err := s.scanDigits(&b); err == io.EOF {
-		return TNUMBER, b.Bytes(), nil
+	if err := s.scanDigits(&n); err == io.EOF {
+		return TNUMBER, s.scratch[0:n], nil
 	} else if err != nil {
 		return 0, nil, err
 	}
+	n++
 
 	// Read period.
-	if err := s.read(); err != nil {
+	if err := s.read(); err == io.EOF {
+		return TNUMBER, s.scratch[0:n], nil
+	} else if err != nil {
 		return 0, nil, err
 	} else if s.c != '.' {
 		s.unread()
-		return TNUMBER, b.Bytes(), nil
+		return TNUMBER, s.scratch[0:n], nil
 	}
-	b.WriteByte('.')
+	s.scratch[n] = '.'
+	n++
 
 	if err := s.read(); err != nil {
 		return 0, nil, err
 	}
 
 	// Read fraction.
-	if _, err := s.scanDigits(&b); err == io.EOF {
-		return TNUMBER, b.Bytes(), nil
+	if err := s.scanDigits(&n); err == io.EOF {
+		return TNUMBER, s.scratch[0:n], nil
 	} else if err != nil {
 		return 0, nil, err
 	}
 
-	return TNUMBER, b.Bytes(), nil
+	return TNUMBER, s.scratch[0:n], nil
 }
 
 // scanDigits reads a series of digits from the reader.
-func (s *scanner) scanDigits(b *bytes.Buffer) (int, error) {
-	count := 0
+func (s *scanner) scanDigits(n *int) error {
 	for {
 		if s.c >= '0' && s.c <= '9' {
-			b.WriteRune(s.c)
-			if err := s.read(); err == io.EOF {
-				return count, err
-			} else if err != nil {
-				return 0, err
+			s.scratch[*n] = byte(s.c)
+			(*n)++
+			if err := s.read(); err != nil {
+				return err
 			}
-			count++
 		} else {
 			s.unread()
-			return count-1, nil
+			(*n)--
+			return nil
 		}
 	}
 }
