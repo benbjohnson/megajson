@@ -185,6 +185,22 @@ func TestScanIgnoreWhitespace(t *testing.T) {
 	assert.Equal(t, tok, 0)
 }
 
+// Ensures that a map can be read into a field.
+func TestReadMap(t *testing.T) {
+	var v map[string]interface{}
+	err := NewScanner(strings.NewReader(`{"foo":"bar", "bat":1293,"truex":true,"falsex":false,"nullx":null,"nested":{"xxx":"yyy"}}`)).ReadMap(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v["foo"], "bar")
+	assert.Equal(t, v["bat"], float64(1293))
+	assert.Equal(t, v["truex"], true)
+	assert.Equal(t, v["falsex"], false)
+	_, exists := v["nullx"]
+	assert.Equal(t, v["nullx"], nil)
+	assert.True(t, exists)
+	assert.NotNil(t, v["nested"])
+	nested := v["nested"].(map[string]interface{})
+	assert.Equal(t, nested["xxx"], "yyy")
+}
 
 
 func BenchmarkScanNumber(b *testing.B) {

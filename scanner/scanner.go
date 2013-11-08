@@ -25,6 +25,7 @@ type Scanner interface {
 	ReadFloat32(target *float32) error
 	ReadFloat64(target *float64) error
 	ReadBool(target *bool) error
+	ReadMap(target *map[string]interface{}) error
 }
 
 type scanner struct {
@@ -471,3 +472,85 @@ func (s *scanner) ReadBool(target *bool) error {
 	return nil
 }
 
+// ReadMap reads the next value into a map variable.
+func (s *scanner) ReadMap(target *map[string]interface{}) error {
+	if tok, b, err := s.Scan(); err != nil {
+		return err
+	} else if tok == TNULL {
+		*target = nil
+		return nil
+	} else if tok != TLBRACE {
+		return fmt.Errorf("Unexpected %s at %d: %s; expected '{'", TokenName(tok), s.Pos(), string(b))
+	}
+
+	// Create a new map.
+	*target = make(map[string]interface{})
+	v := *target
+
+	// Loop over key/value pairs.
+	index := 0
+	for {
+		// Read in key.
+		var key string
+		tok, b, err := s.Scan()
+		if err != nil {
+			return err
+		} else if tok == TRBRACE {
+			return nil
+		} else if tok == TCOMMA {
+			if index == 0 {
+				return fmt.Errorf("Unexpected comma at %d", s.Pos())
+			}
+			if tok, b, err = s.Scan(); err != nil {
+				return err
+			}
+		}
+
+		if tok != TSTRING {
+			return fmt.Errorf("Unexpected %s at %d: %s; expected '{' or string", TokenName(tok), s.Pos(), string(b))
+		} else {
+			key = string(b)
+		}
+
+		// Read in the colon.
+		if tok, b, err := s.Scan(); err != nil {
+			return err
+		} else if tok != TCOLON {
+			return fmt.Errorf("Unexpected %s at %d: %s; expected colon", TokenName(tok), s.Pos(), string(b))
+		}
+
+		// Read the next token.
+		tok, b, err = s.Scan()
+		if err != nil {
+			return err
+		}
+		switch tok {
+		case TSTRING:
+			v[key] = string(b)
+		case TNUMBER:
+			v[key], _ = strconv.ParseFloat(string(b), 64)
+		case TTRUE:
+			v[key] = true
+		case TFALSE:
+			v[key] = false
+		case TNULL:
+			v[key] = nil
+		case TLBRACE:
+			s.Unscan(tok, b)
+			m := make(map[string]interface{})
+			if err := s.ReadMap(&m); err != nil {
+				return err
+			}
+			v[key] = m
+		case TLBRACKET:
+			// TODO: Read arrays.
+			panic("Not supported yet")
+		default:
+			return fmt.Errorf("Unexpected %s at %d: %s", TokenName(tok), s.Pos(), string(b))
+		}
+
+		index++
+	}
+
+	return nil
+}
