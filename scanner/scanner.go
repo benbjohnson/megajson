@@ -31,6 +31,7 @@ type Scanner interface {
 type scanner struct {
 	r io.Reader
 	c rune
+	scratch [4096]byte
 	buf [bufSize]byte
 	buflen int
 	idx int
@@ -222,51 +223,58 @@ func (s *scanner) scanDigits(b *bytes.Buffer) (int, error) {
 
 // scanString reads a quoted JSON string from the reader.
 func (s *scanner) scanString() (int, []byte, error) {
-	var b bytes.Buffer
-
+	// TODO: Support large strings (e.g. >bufSize).
+	var n int
 	for {
 		if err := s.read(); err != nil {
 			return 0, nil, err
 		}
 		switch s.c {
 		case '\\':
-			if err := s.scanEscape(&b); err != nil {
+			if err := s.read(); err != nil {
 				return 0, nil, err
 			}
-		case '"':
-			return TSTRING, b.Bytes(), nil
-		default:
-			b.WriteRune(s.c)
-		}
-	}
-}
+			switch s.c {
+			case '"':
+				s.scratch[n] = '"'
+				n++
+			case '\\':
+				s.scratch[n] = '\\'
+				n++
+			case '/':
+				s.scratch[n] = '/'
+				n++
+			case 'b':
+				s.scratch[n] = '\b'
+				n++
+			case 'f':
+				s.scratch[n] = '\f'
+				n++
+			case 'n':
+				s.scratch[n] = '\n'
+				n++
+			case 'r':
+				s.scratch[n] = '\r'
+				n++
+			case 't':
+				s.scratch[n] = '\t'
+				n++
+			case 'u':
+				panic("Unicode escape not yet implemented")
+				// TODO: Support unicode escape \u0000.
+			default:
+				return 0, nil, fmt.Errorf("Invalid escape character: \\%c", s.c)
+			}
 
-// scanEscape reads an escaped string character.
-func (s *scanner) scanEscape(b *bytes.Buffer) error {
-	for {
-		if err := s.read(); err != nil {
-			return err
-		}
-		switch s.c {
 		case '"':
-			return b.WriteByte('"')
-		case '\\':
-			return b.WriteByte('\\')
-		case '/':
-			return b.WriteByte('/')
-		case 'b':
-			return b.WriteByte('\b')
-		case 'f':
-			return b.WriteByte('\f')
-		case 'n':
-			return b.WriteByte('\n')
-		case 'r':
-			return b.WriteByte('\r')
-		case 't':
-			return b.WriteByte('\t')
-		case 'u':
-			// TODO: \u0000
-			return nil
+			return TSTRING, s.scratch[0:n], nil
+		default:
+			if s.c < utf8.RuneSelf {
+				s.scratch[n] = byte(s.c)
+				n++
+			} else {
+				n += utf8.EncodeRune(s.scratch[n:], s.c)
+			}
 		}
 	}
 }
