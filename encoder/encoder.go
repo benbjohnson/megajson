@@ -33,10 +33,11 @@ type Encoder interface {
 	WriteFloat64(float64) error
 	WriteBool(bool) error
 	WriteNull() error
+	WriteMap(map[string]interface{}) error
 }
 
 type encoder struct {
-	w io.Writer
+	w   io.Writer
 	buf [actualBufSize + 64]byte
 	pos int
 }
@@ -60,7 +61,7 @@ func (e *encoder) Flush() error {
 // check verifies there is space in the buffer.
 func (e *encoder) check() error {
 	if e.pos > actualBufSize {
-		return e.Flush();
+		return e.Flush()
 	}
 	return nil
 }
@@ -112,7 +113,7 @@ func (e *encoder) WriteString(v string) error {
 		}
 		sub := v[i:bufend]
 		sublen := end - i
-	
+
 		prev := 0
 		for j := 0; j < sublen; {
 			if b := sub[j]; b < utf8.RuneSelf {
@@ -256,5 +257,84 @@ func (e *encoder) WriteNull() error {
 	e.buf[e.pos+2] = 'l'
 	e.buf[e.pos+3] = 'l'
 	e.pos += 4
+	return nil
+}
+
+// WriteMap writes a map.
+func (e *encoder) WriteMap(v map[string]interface{}) error {
+	if err := e.check(); err != nil {
+		return err
+	}
+
+	e.buf[e.pos] = '{'
+	e.pos++
+
+	var index int
+	for key, value := range v {
+		if index > 0 {
+			e.buf[e.pos] = ','
+			e.pos++
+		}
+
+		// Write key and colon.
+		if err := e.WriteString(key); err != nil {
+			return err
+		}
+		e.buf[e.pos] = ':'
+		e.pos++
+
+		// Write value.
+		if value == nil {
+			if err := e.WriteNull(); err != nil {
+				return err
+			}
+
+		} else {
+			switch value := value.(type) {
+			case string:
+				if err := e.WriteString(value); err != nil {
+					return err
+				}
+			case int:
+				if err := e.WriteInt(value); err != nil {
+					return err
+				}
+			case int64:
+				if err := e.WriteInt64(value); err != nil {
+					return err
+				}
+			case uint:
+				if err := e.WriteUint(value); err != nil {
+					return err
+				}
+			case uint64:
+				if err := e.WriteUint64(value); err != nil {
+					return err
+				}
+			case float32:
+				if err := e.WriteFloat32(value); err != nil {
+					return err
+				}
+			case float64:
+				if err := e.WriteFloat64(value); err != nil {
+					return err
+				}
+			case bool:
+				if err := e.WriteBool(value); err != nil {
+					return err
+				}
+			case map[string]interface{}:
+				if err := e.WriteMap(value); err != nil {
+					return err
+				}
+			}
+		}
+
+		index++
+	}
+
+	e.buf[e.pos] = '}'
+	e.pos++
+
 	return nil
 }

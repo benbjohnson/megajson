@@ -170,6 +170,64 @@ func TestWriteFloat64(t *testing.T) {
 	assert.Equal(t, b.String(), `2.319123192191827e+06`)
 }
 
+// Ensures that a simple map can be written.
+func TestWriteSimpleMap(t *testing.T) {
+	var b bytes.Buffer
+	e := NewEncoder(&b)
+	m := map[string]interface{}{
+		"foo": "bar",
+		"bat": "baz",
+	}
+	assert.NoError(t, e.WriteMap(m))
+	assert.NoError(t, e.Flush())
+	if b.String() != `{"foo":"bar","bat":"baz"}` && b.String() != `{"foo":"bar","bat":"baz"}` {
+		t.Fatal("Invalid map encoding:", b.String())
+	}
+}
+
+// Ensures that a more complex map can be written.
+func TestWriteMap(t *testing.T) {
+	var b bytes.Buffer
+	e := NewEncoder(&b)
+	m := map[string]interface{}{
+		"stringx": "foo",
+		"intx":    100,
+		"int64x":  int64(1023),
+		"uintx":   uint(100),
+		"uint64x": uint64(1023),
+		"float32x": float32(312.311),
+		"float64x": float64(812731.19812),
+		"truex": true,
+		"falsex": false,
+		"nullx": nil,
+	}
+	assert.NoError(t, e.WriteMap(m))
+	assert.NoError(t, e.Flush())
+	assert.Contains(t, b.String(), `"intx":100`)
+	assert.Contains(t, b.String(), `"int64x":1023`)
+	assert.Contains(t, b.String(), `"uint64x":1023`)
+	assert.Contains(t, b.String(), `"float32x":312.311`)
+	assert.Contains(t, b.String(), `"float64x":812731.19812`)
+	assert.Contains(t, b.String(), `"falsex":false`)
+	assert.Contains(t, b.String(), `"nullx":null`)
+	assert.Contains(t, b.String(), `"falsex":false`)
+	assert.Contains(t, b.String(), `"stringx":"foo"`)
+	assert.Contains(t, b.String(), `"uintx":100`)
+	assert.Contains(t, b.String(), `"truex":true`)
+}
+
+// Ensures that a nested map can be written.
+func TestWriteNestedMap(t *testing.T) {
+	var b bytes.Buffer
+	e := NewEncoder(&b)
+	m := map[string]interface{}{
+		"foo": map[string]interface{}{"bar": "bat"},
+	}
+	assert.NoError(t, e.WriteMap(m))
+	assert.NoError(t, e.Flush())
+	assert.Equal(t, b.String(), `{"foo":{"bar":"bat"}}`)
+}
+
 func BenchmarkWriteFloat32(b *testing.B) {
 	var buf bytes.Buffer
 	e := NewEncoder(&buf)
