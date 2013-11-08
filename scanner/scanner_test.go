@@ -1,10 +1,12 @@
 package scanner
 
 import (
-	"github.com/stretchr/testify/assert"
+	"bytes"
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // Ensures that a positive number can be scanned.
@@ -162,3 +164,161 @@ func TestReadBoolTrue(t *testing.T) {
 	assert.Equal(t, v, true)
 }
 
+// Ensures whitespace between tokens are ignored.
+func TestScanIgnoreWhitespace(t *testing.T) {
+	s := NewScanner(strings.NewReader(" 100 true false "))
+
+	tok, _, err := s.Scan()
+	assert.NoError(t, err)
+	assert.Equal(t, tok, TNUMBER)
+
+	tok, _, err = s.Scan()
+	assert.NoError(t, err)
+	assert.Equal(t, tok, TTRUE)
+
+	tok, _, err = s.Scan()
+	assert.NoError(t, err)
+	assert.Equal(t, tok, TFALSE)
+
+	tok, _, err = s.Scan()
+	assert.Equal(t, err, io.EOF)
+	assert.Equal(t, tok, 0)
+}
+
+
+
+func BenchmarkScanNumber(b *testing.B) {
+	withBuffer(b, "100", func(buf []byte) {
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if _, _, err := s.Scan(); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+func BenchmarkScanString(b *testing.B) {
+	withBuffer(b, `"01234567"`, func(buf []byte) {
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if _, _, err := s.Scan(); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+func BenchmarkScanLongString(b *testing.B) {
+	withBuffer(b, `"foo foo foo foo foo foo foo foo foo foo foo foo foo foo"`, func(buf []byte) {
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if _, _, err := s.Scan(); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+func BenchmarkScanEscapedString(b *testing.B) {
+	withBuffer(b, `"\"\\\/\b\f\n\r\t"`, func(buf []byte) {
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if _, _, err := s.Scan(); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+func BenchmarkReadString(b *testing.B) {
+	withBuffer(b, `"01234567"`, func(buf []byte) {
+		var v string
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if err := s.ReadString(&v); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+func BenchmarkReadLongString(b *testing.B) {
+	withBuffer(b, `"foo foo foo foo foo foo foo foo foo foo foo foo foo foo"`, func(buf []byte) {
+		var v string
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if err := s.ReadString(&v); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+func BenchmarkReadInt(b *testing.B) {
+	withBuffer(b, `"100"`, func(buf []byte) {
+		var v int
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if err := s.ReadInt(&v); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+func BenchmarkReadFloat64(b *testing.B) {
+	withBuffer(b, `"9871293.414123"`, func(buf []byte) {
+		var v float64
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if err := s.ReadFloat64(&v); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+func BenchmarkReadBool(b *testing.B) {
+	withBuffer(b, `true`, func(buf []byte) {
+		var v bool
+		s := NewScanner(bytes.NewBuffer(buf))
+		for i := 0; i < b.N; i++ {
+			if err := s.ReadBool(&v); err == io.EOF {
+				s = NewScanner(bytes.NewBuffer(buf))
+			} else if err != nil {
+				b.Fatal("scan error:", err)
+			}
+		}
+	})
+}
+
+
+func withBuffer(b *testing.B, value string, fn func([]byte)) {
+	b.StopTimer()
+	var str string
+	for i := 0; i < 1000; i++ {
+		str += value + " "
+	}
+	b.StartTimer()
+
+	fn([]byte(str))
+
+	b.SetBytes(int64(len(value)))
+}

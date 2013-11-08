@@ -27,7 +27,7 @@ type scanner struct {
 	r *bufio.Reader
 	c rune
 	pos int
-	buf struct{
+	tmp struct{
 		tok int
 		b   []byte
 		err error
@@ -72,9 +72,9 @@ func (s *scanner) expect(c rune) error {
 
 // Scan returns the next JSON token from the reader.
 func (s *scanner) Scan() (int, []byte, error) {
-	if s.buf.tok != 0 {
-		tok, b := s.buf.tok, s.buf.b
-		s.buf.tok, s.buf.b = 0, nil
+	if s.tmp.tok != 0 {
+		tok, b := s.tmp.tok, s.tmp.b
+		s.tmp.tok, s.tmp.b = 0, nil
 		return tok, b, nil
 	}
 
@@ -115,8 +115,8 @@ func (s *scanner) Scan() (int, []byte, error) {
 // Unscan adds a token and byte array back onto the buffer to be read
 // on the next call to Scan().
 func (s *scanner) Unscan(tok int, b []byte) {
-	s.buf.tok = tok
-	s.buf.b = b
+	s.tmp.tok = tok
+	s.tmp.b = b
 	s.pos--
 }
 

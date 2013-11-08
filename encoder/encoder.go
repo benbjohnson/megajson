@@ -37,7 +37,6 @@ type Encoder interface {
 
 type encoder struct {
 	w io.Writer
-	scratch [64]byte
 	buf [actualBufSize + 64]byte
 	pos int
 }
