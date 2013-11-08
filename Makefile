@@ -2,19 +2,21 @@ COVERPROFILE=/tmp/c.out
 
 default:
 	@echo "usage:"
+	@echo "    make bindata"
 	@echo "    make bench"
 	@echo "    make cloc"
 	@echo "    make PKG=./pkgname cover"
 	@echo "    make fmt"
 	@echo
 
-assets: generator/decoder_tmpl.go
+bindata: generator/encoder_tmpl.go generator/decoder_tmpl.go
+
+generator/encoder_tmpl.go: generator/tmpl/encoder.tmpl
+	cat $< | go-bindata -f encoder_tmpl -p generator | gofmt > $@
 
 generator/decoder_tmpl.go: generator/tmpl/decoder.tmpl
 	cat $< | go-bindata -f decoder_tmpl -p generator | gofmt > $@
 
-
-.PHONY: assets
 
 bench: benchpreq
 	go test -v -test.bench=. ./bench
@@ -44,6 +46,8 @@ fmt:
 	go fmt ./...
 
 test:
+	go test -i ./...
 	go test -v ./...
 
-.PHONY: test
+
+.PHONY: assets test

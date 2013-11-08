@@ -4,7 +4,25 @@ import (
 	"go/ast"
 	"reflect"
 	"strings"
+	"text/template"
 )
+
+var encoderTemplate *template.Template
+var decoderTemplate *template.Template
+
+func init() {
+	m := template.FuncMap{
+		"types": getTypeSpecs,
+		"fields": getStructFields,
+		"istype": isType,
+		"isprimitivetype": isPrimitiveType,
+		"subtype": getSubType,
+		"fieldname": getFieldName,
+		"keyname": getJSONKeyName,
+	}
+	encoderTemplate = template.Must(template.New("encoder.tmpl").Funcs(m).Parse(string(encoder_tmpl())))
+	decoderTemplate = template.Must(template.New("decoder.tmpl").Funcs(m).Parse(string(decoder_tmpl())))
+}
 
 // getTypeSpecs retrieves all struct TypeSpec objects in a File.
 func getTypeSpecs(f *ast.File) []*ast.TypeSpec {
@@ -28,7 +46,9 @@ func getStructFields(spec *ast.TypeSpec) []*ast.Field {
 	s := make([]*ast.Field, 0)
 	if structType, ok := spec.Type.(*ast.StructType); ok {
 		for _, field := range structType.Fields.List {
-			s = append(s, field)
+			if getJSONKeyName(field) != "" {
+				s = append(s, field)
+			}
 		}
 	}
 	return s

@@ -3,7 +3,6 @@ package generator
 import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
-	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
@@ -20,7 +19,7 @@ type Foo struct {
 }
 `
 	f, _ := parser.ParseFile(token.NewFileSet(), "foo.go", src, 0)
-	err := writeTypeEncoder(&b, f.Decls[0].(*ast.GenDecl).Specs[0].(*ast.TypeSpec))
+	err := writeFileEncoder(&b, f)
 	assert.NoError(t, err)
 }
 
