@@ -203,6 +203,7 @@ func (s *scanner) scanNumber() (int, []byte, error) {
 	} else if err != nil {
 		return 0, nil, err
 	}
+	n++
 
 	return TNUMBER, s.scratch[0:n], nil
 }
