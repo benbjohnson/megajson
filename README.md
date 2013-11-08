@@ -50,7 +50,7 @@ Just provide the files or directories that you want to generate encoders and dec
 $ megajson mypkg/my_file.go
 ```
 
-Two new fields will be generated:
+Two new files will be generated:
 
 ```
 mypkg/my_file_encoder.go
