@@ -76,7 +76,6 @@ func TestScanEOF(t *testing.T) {
 	assert.Equal(t, err, io.EOF)
 }
 
-
 // Ensures that a string can be read into a field.
 func TestReadString(t *testing.T) {
 	var v string
@@ -202,7 +201,6 @@ func TestReadMap(t *testing.T) {
 	assert.Equal(t, nested["xxx"], "yyy")
 }
 
-
 func BenchmarkScanNumber(b *testing.B) {
 	withBuffer(b, "100", func(buf []byte) {
 		s := NewScanner(bytes.NewBuffer(buf))
@@ -324,7 +322,6 @@ func BenchmarkReadBool(b *testing.B) {
 		}
 	})
 }
-
 
 func withBuffer(b *testing.B, value string, fn func([]byte)) {
 	b.StopTimer()

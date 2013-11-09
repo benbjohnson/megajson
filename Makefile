@@ -29,10 +29,10 @@ benchpreq:
 	go run main.go -- bench/code.go
 
 cloc:
-	cloc --not-match-f=_test.go --not-match-d=test .
+	cloc --not-match-f=_test.go --not-match-d=test --not-match-d=bench .
 
 cover: coverpreq fmt
-	go test -v -coverprofile=$(COVERPROFILE) $(PKG)
+	go test -coverprofile=$(COVERPROFILE) $(PKG)
 	go tool cover -html=$(COVERPROFILE)
 	rm $(COVERPROFILE)
 

@@ -75,5 +75,3 @@ func generateDecoder(file *ast.File, path string, mode os.FileMode) error {
 	}
 	return nil
 }
-
-

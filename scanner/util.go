@@ -5,7 +5,7 @@ import (
 )
 
 func debugf(format string, a ...interface{}) {
-	fmt.Printf(format + "\n", a...)
+	fmt.Printf(format+"\n", a...)
 }
 
 func debugln(a ...interface{}) {

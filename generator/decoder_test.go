@@ -43,4 +43,3 @@ func runDecodingFixture(name string) (ret string, err error) {
 	options.GenerateDecoder = true
 	return runFixture(name, options)
 }
-

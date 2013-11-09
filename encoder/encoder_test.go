@@ -190,16 +190,16 @@ func TestWriteMap(t *testing.T) {
 	var b bytes.Buffer
 	e := NewEncoder(&b)
 	m := map[string]interface{}{
-		"stringx": "foo",
-		"intx":    100,
-		"int64x":  int64(1023),
-		"uintx":   uint(100),
-		"uint64x": uint64(1023),
+		"stringx":  "foo",
+		"intx":     100,
+		"int64x":   int64(1023),
+		"uintx":    uint(100),
+		"uint64x":  uint64(1023),
 		"float32x": float32(312.311),
 		"float64x": float64(812731.19812),
-		"truex": true,
-		"falsex": false,
-		"nullx": nil,
+		"truex":    true,
+		"falsex":   false,
+		"nullx":    nil,
 	}
 	assert.NoError(t, e.WriteMap(m))
 	assert.NoError(t, e.Flush())

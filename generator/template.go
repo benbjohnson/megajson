@@ -12,13 +12,13 @@ var decoderTemplate *template.Template
 
 func init() {
 	m := template.FuncMap{
-		"types": getTypeSpecs,
-		"fields": getStructFields,
-		"istype": isType,
+		"types":           getTypeSpecs,
+		"fields":          getStructFields,
+		"istype":          isType,
 		"isprimitivetype": isPrimitiveType,
-		"subtype": getSubType,
-		"fieldname": getFieldName,
-		"keyname": getJSONKeyName,
+		"subtype":         getSubType,
+		"fieldname":       getFieldName,
+		"keyname":         getJSONKeyName,
 	}
 	encoderTemplate = template.Must(template.New("encoder.tmpl").Funcs(m).Parse(string(encoder_tmpl())))
 	decoderTemplate = template.Must(template.New("decoder.tmpl").Funcs(m).Parse(string(decoder_tmpl())))

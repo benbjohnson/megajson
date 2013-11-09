@@ -29,15 +29,15 @@ type Scanner interface {
 }
 
 type scanner struct {
-	r io.Reader
-	c rune
+	r       io.Reader
+	c       rune
 	scratch [4096]byte
-	buf [bufSize]byte
-	buflen int
-	idx int
-	pos int
-	tmpc rune
-	tmp struct{
+	buf     [bufSize]byte
+	buflen  int
+	idx     int
+	pos     int
+	tmpc    rune
+	tmp     struct {
 		tok int
 		b   []byte
 		err error
@@ -46,7 +46,7 @@ type scanner struct {
 
 // NewScanner initializes a new scanner with a given reader.
 func NewScanner(r io.Reader) Scanner {
-	s := &scanner{r:r, buflen:-1}
+	s := &scanner{r: r, buflen: -1}
 	return s
 }
 
@@ -79,7 +79,7 @@ func (s *scanner) read() error {
 		s.idx++
 	} else {
 		// Read a new buffer if we don't have at least the max size of a UTF8 character.
-		if s.idx + utf8.UTFMax >= s.buflen {
+		if s.idx+utf8.UTFMax >= s.buflen {
 			s.buf[0] = b
 			var err error
 			if s.buflen, err = s.r.Read(s.buf[1:]); err != nil {
@@ -87,7 +87,7 @@ func (s *scanner) read() error {
 			}
 			s.buflen += 1
 		}
-		
+
 		var size int
 		s.c, size = utf8.DecodeRune(s.buf[s.idx:])
 		s.idx += size
@@ -381,7 +381,6 @@ func (s *scanner) ReadInt64(target *int64) error {
 	}
 	return nil
 }
-
 
 // ReadUint reads a token into an uint variable.
 func (s *scanner) ReadUint(target *uint) error {

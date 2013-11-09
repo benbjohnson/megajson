@@ -33,5 +33,3 @@ func writeFileEncoder(w io.Writer, file *ast.File) error {
 
 	return nil
 }
-
-
