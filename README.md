@@ -9,7 +9,7 @@
 Go's builtin JSON support works great to provide simple, runtime JSON encoding and decoding.
 However, it's based on reflection so it has a few drawbacks:
 
-* *Performance* - The reflection library is slow and cannot be optimized by the compiler at compile time.
+* *Performance* - The reflection library is slow and isn't optimized by the compiler at compile time.
 
 * *Public Fields Only* - The reflection library can only reflect on exported fields.
   That means that you can't marshal private fields to JSON.
