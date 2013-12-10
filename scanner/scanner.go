@@ -265,8 +265,37 @@ func (s *scanner) scanString() (int, []byte, error) {
 				s.scratch[n] = '\t'
 				n++
 			case 'u':
-				panic("Unicode escape not yet implemented")
-				// TODO: Support unicode escape \u0000.
+				numeric := make([]byte, 4)
+				numericCount := 0
+			unicode_loop:
+				for {
+					if err := s.read(); err != nil {
+						return 0, nil, err
+					}
+					switch {
+					case s.c >= '0' && s.c <= '9' || s.c >= 'a' && s.c <= 'f' || s.c >= 'A' && s.c <= 'F':
+						numeric[numericCount] = byte(s.c)
+						numericCount++
+						if numericCount == 4 {
+							var i int64
+							var err error
+							if i, err = strconv.ParseInt(string(numeric), 16, 32); err != nil {
+								return 0, nil, err
+							}
+							if i < utf8.RuneSelf {
+								s.scratch[n] = byte(i)
+								n++
+							} else {
+								encoded := utf8.EncodeRune(s.scratch[n:], rune(i))
+								n += encoded
+							}
+							break unicode_loop
+						}
+					default:
+						s.unread()
+						return 0, nil, fmt.Errorf("Unexpected symbol in unicode escape: %c", s.c)
+					}
+				}
 			default:
 				return 0, nil, fmt.Errorf("Invalid escape character: \\%c", s.c)
 			}
