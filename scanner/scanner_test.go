@@ -49,6 +49,14 @@ func TestScanEscapedString(t *testing.T) {
 	assert.Equal(t, string(b), "\"\\/\b\f\n\r\t")
 }
 
+// Ensures that escaped unicode sequences can be decoded.
+func TestScanEscapedUnicode(t *testing.T) {
+	tok, b, err := NewScanner(strings.NewReader(`"\u0026 \u0424 \u03B4 \u03b4"`)).Scan()
+	assert.NoError(t, err)
+	assert.Equal(t, tok, TSTRING)
+	assert.Equal(t, string(b), "& Ф δ δ")
+}
+
 // Ensures that a true value can be scanned.
 func TestScanTrue(t *testing.T) {
 	tok, _, err := NewScanner(strings.NewReader(`true`)).Scan()
