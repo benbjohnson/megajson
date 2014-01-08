@@ -12,10 +12,10 @@ default:
 bindata: generator/encoder_tmpl.go generator/decoder_tmpl.go
 
 generator/encoder_tmpl.go: generator/tmpl/encoder.tmpl
-	cat $< | go-bindata -f encoder_tmpl -p generator | gofmt > $@
+	cat $< | go-bindata -func encoder_tmpl -pkg generator | gofmt > $@
 
 generator/decoder_tmpl.go: generator/tmpl/decoder.tmpl
-	cat $< | go-bindata -f decoder_tmpl -p generator | gofmt > $@
+	cat $< | go-bindata -func decoder_tmpl -pkg generator | gofmt > $@
 
 
 bench: benchpreq
@@ -25,7 +25,7 @@ bench-cpuprofile: benchpreq
 	go test -v -test.bench=. -test.cpuprofile=test/cpu.out ./bench
 	go tool pprof test/cpu.out
 
-benchpreq:
+benchpreq: bindata
 	go run main.go -- bench/code.go
 
 cloc:
