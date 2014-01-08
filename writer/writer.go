@@ -20,7 +20,6 @@ const (
 
 var hex = "0123456789abcdef"
 
-
 type Writer struct {
 	w   io.Writer
 	buf [actualBufSize + 64]byte

@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-// const DATA = `{"StringX":"foo","BX":{"Name":"John","Age":20},"BY":null,"Bn":[{"Name":"Jane","Age":60}],"Bn2":[]}`
 const DATA = `{"StringX":"foo","BX":{"Name":"John","Age":20},"BY":null,"Bn":[{"Name":"Jane","Age":60},{"Name":"Jack","Age":-13}]}`
 
 func main() {

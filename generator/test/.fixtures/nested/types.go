@@ -8,3 +8,7 @@ type A struct {
     Bn2 []*B
 }
 
+type B struct {
+    Name string
+    Age int
+}
