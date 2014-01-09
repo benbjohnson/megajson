@@ -27,7 +27,7 @@ type generator struct {
 	encoder encoder.Generator
 }
 
-func NewGenerator() Generator {
+func New() Generator {
 	return &generator{}
 }
 
