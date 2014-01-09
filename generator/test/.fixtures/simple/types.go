@@ -11,4 +11,3 @@ type MyStruct struct {
     BoolX bool
     IgnoreString string `json:"-"`
 }
-

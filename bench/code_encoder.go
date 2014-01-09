@@ -1,190 +1,284 @@
 package bench
 
 import (
-	"github.com/benbjohnson/megajson/encoder"
+	"github.com/benbjohnson/megajson/writer"
 	"io"
 )
 
 type codeResponseJSONEncoder struct {
-	enc encoder.Encoder
+	w *writer.Writer
 }
 
 func NewcodeResponseJSONEncoder(w io.Writer) *codeResponseJSONEncoder {
-	return &codeResponseJSONEncoder{enc: encoder.NewEncoder(w)}
+	return &codeResponseJSONEncoder{w: writer.NewWriter(w)}
 }
 
-func NewcodeResponseJSONRawEncoder(enc encoder.Encoder) *codeResponseJSONEncoder {
-	return &codeResponseJSONEncoder{enc: enc}
+func NewcodeResponseJSONRawEncoder(w *writer.Writer) *codeResponseJSONEncoder {
+	return &codeResponseJSONEncoder{w: w}
 }
 
 func (e *codeResponseJSONEncoder) Encode(v *codeResponse) error {
 	if err := e.RawEncode(v); err != nil {
 		return err
 	}
-	if err := e.enc.Flush(); err != nil {
+	if err := e.w.Flush(); err != nil {
 		return err
 	}
 	return nil
 }
+
 func (e *codeResponseJSONEncoder) RawEncode(v *codeResponse) error {
 	if v == nil {
-		return e.enc.WriteNull()
+		return e.w.WriteNull()
 	}
 
-	if err := e.enc.WriteByte('{'); err != nil {
+	if err := e.w.WriteByte('{'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString("tree"); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("tree"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(':'); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := NewcodeNodeJSONRawEncoder(e.enc).RawEncode(v.Tree); err != nil {
+
+	// Write value.
+	{
+		v := v.Tree
+
+		if err := NewcodeNodeJSONRawEncoder(e.w).RawEncode(v); err != nil {
+			return err
+		}
+
+	}
+
+	if err := e.w.WriteByte(','); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(','); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("username"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString("username"); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(':'); err != nil {
-		return err
+
+	// Write value.
+	{
+		v := v.Username
+
+		if err := e.w.WriteString(v); err != nil {
+			return err
+		}
+
 	}
-	if err := e.enc.WriteString(v.Username); err != nil {
-		return err
-	}
-	if err := e.enc.WriteByte('}'); err != nil {
+
+	if err := e.w.WriteByte('}'); err != nil {
 		return err
 	}
 	return nil
 }
 
 type codeNodeJSONEncoder struct {
-	enc encoder.Encoder
+	w *writer.Writer
 }
 
 func NewcodeNodeJSONEncoder(w io.Writer) *codeNodeJSONEncoder {
-	return &codeNodeJSONEncoder{enc: encoder.NewEncoder(w)}
+	return &codeNodeJSONEncoder{w: writer.NewWriter(w)}
 }
 
-func NewcodeNodeJSONRawEncoder(enc encoder.Encoder) *codeNodeJSONEncoder {
-	return &codeNodeJSONEncoder{enc: enc}
+func NewcodeNodeJSONRawEncoder(w *writer.Writer) *codeNodeJSONEncoder {
+	return &codeNodeJSONEncoder{w: w}
 }
 
 func (e *codeNodeJSONEncoder) Encode(v *codeNode) error {
 	if err := e.RawEncode(v); err != nil {
 		return err
 	}
-	if err := e.enc.Flush(); err != nil {
+	if err := e.w.Flush(); err != nil {
 		return err
 	}
 	return nil
 }
+
 func (e *codeNodeJSONEncoder) RawEncode(v *codeNode) error {
 	if v == nil {
-		return e.enc.WriteNull()
+		return e.w.WriteNull()
 	}
 
-	if err := e.enc.WriteByte('{'); err != nil {
+	if err := e.w.WriteByte('{'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString("name"); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("name"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(':'); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString(v.Name); err != nil {
+
+	// Write value.
+	{
+		v := v.Name
+
+		if err := e.w.WriteString(v); err != nil {
+			return err
+		}
+
+	}
+
+	if err := e.w.WriteByte(','); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(','); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("kids"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString("kids"); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(':'); err != nil {
-		return err
-	}
-	if err := e.enc.WriteByte('['); err != nil {
-		return err
-	}
-	for index, elem := range v.Kids {
-		if index > 0 {
-			if err := e.enc.WriteByte(','); err != nil {
+
+	// Write value.
+	{
+		v := v.Kids
+
+		if err := e.w.WriteByte('['); err != nil {
+			return err
+		}
+
+		for index, v := range v {
+			if index > 0 {
+				if err := e.w.WriteByte(','); err != nil {
+					return err
+				}
+			}
+			if err := NewcodeNodeJSONRawEncoder(e.w).RawEncode(v); err != nil {
 				return err
 			}
 		}
-		if err := NewcodeNodeJSONRawEncoder(e.enc).RawEncode(elem); err != nil {
+
+		if err := e.w.WriteByte(']'); err != nil {
 			return err
 		}
+
 	}
-	if err := e.enc.WriteByte(']'); err != nil {
+
+	if err := e.w.WriteByte(','); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(','); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("cl_weight"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString("cl_weight"); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(':'); err != nil {
+
+	// Write value.
+	{
+		v := v.CLWeight
+
+		if err := e.w.WriteFloat64(v); err != nil {
+			return err
+		}
+
+	}
+
+	if err := e.w.WriteByte(','); err != nil {
 		return err
 	}
-	if err := e.enc.WriteFloat64(v.CLWeight); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("touches"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(','); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString("touches"); err != nil {
+
+	// Write value.
+	{
+		v := v.Touches
+
+		if err := e.w.WriteInt(v); err != nil {
+			return err
+		}
+
+	}
+
+	if err := e.w.WriteByte(','); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(':'); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("min_t"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteInt(v.Touches); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(','); err != nil {
+
+	// Write value.
+	{
+		v := v.MinT
+
+		if err := e.w.WriteInt64(v); err != nil {
+			return err
+		}
+
+	}
+
+	if err := e.w.WriteByte(','); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString("min_t"); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("max_t"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(':'); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteInt64(v.MinT); err != nil {
+
+	// Write value.
+	{
+		v := v.MaxT
+
+		if err := e.w.WriteInt64(v); err != nil {
+			return err
+		}
+
+	}
+
+	if err := e.w.WriteByte(','); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(','); err != nil {
+
+	// Write key and colon.
+	if err := e.w.WriteString("mean_t"); err != nil {
 		return err
 	}
-	if err := e.enc.WriteString("max_t"); err != nil {
+	if err := e.w.WriteByte(':'); err != nil {
 		return err
 	}
-	if err := e.enc.WriteByte(':'); err != nil {
-		return err
+
+	// Write value.
+	{
+		v := v.MeanT
+
+		if err := e.w.WriteInt64(v); err != nil {
+			return err
+		}
+
 	}
-	if err := e.enc.WriteInt64(v.MaxT); err != nil {
-		return err
-	}
-	if err := e.enc.WriteByte(','); err != nil {
-		return err
-	}
-	if err := e.enc.WriteString("mean_t"); err != nil {
-		return err
-	}
-	if err := e.enc.WriteByte(':'); err != nil {
-		return err
-	}
-	if err := e.enc.WriteInt64(v.MeanT); err != nil {
-		return err
-	}
-	if err := e.enc.WriteByte('}'); err != nil {
+
+	if err := e.w.WriteByte('}'); err != nil {
 		return err
 	}
 	return nil

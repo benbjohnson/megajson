@@ -2,27 +2,27 @@ package {{.Name.Name}}
 
 import (
 	"io"
-	"github.com/benbjohnson/megajson/encoder"
+	"github.com/benbjohnson/megajson/writer"
 )
 
 {{range types .}}
 type {{.Name.Name}}JSONEncoder struct {
-	enc encoder.Encoder
+	w *writer.Writer
 }
 
 func New{{.Name.Name}}JSONEncoder(w io.Writer) *{{.Name.Name}}JSONEncoder {
-	return &{{.Name.Name}}JSONEncoder{enc: encoder.NewEncoder(w)}
+	return &{{.Name.Name}}JSONEncoder{w: writer.NewWriter(w)}
 }
 
-func New{{.Name.Name}}JSONRawEncoder(enc encoder.Encoder) *{{.Name.Name}}JSONEncoder {
-	return &{{.Name.Name}}JSONEncoder{enc: enc}
+func New{{.Name.Name}}JSONRawEncoder(w *writer.Writer) *{{.Name.Name}}JSONEncoder {
+	return &{{.Name.Name}}JSONEncoder{w: w}
 }
 
 func (e *{{.Name.Name}}JSONEncoder) Encode(v *{{.Name.Name}}) error {
 	if err := e.RawEncode(v); err != nil {
 		return err
 	}
-	if err := e.enc.Flush(); err != nil {
+	if err := e.w.Flush(); err != nil {
 		return err
 	}
 	return nil
@@ -30,25 +30,25 @@ func (e *{{.Name.Name}}JSONEncoder) Encode(v *{{.Name.Name}}) error {
 
 func (e *{{.Name.Name}}JSONEncoder) RawEncode(v *{{.Name.Name}}) error {
 	if v == nil {
-		return e.enc.WriteNull()
+		return e.w.WriteNull()
 	}
 
-	if err := e.enc.WriteByte('{'); err != nil {
+	if err := e.w.WriteByte('{'); err != nil {
 		return err
 	}
 
 	{{range $index, $field := fields .}}
 		{{if $index}}
-			if err := e.enc.WriteByte(','); err != nil {
+			if err := e.w.WriteByte(','); err != nil {
 				return err
 			}
 		{{end}}
 
 		// Write key and colon.
-		if err := e.enc.WriteString({{keyname . | printf "%q"}}); err != nil {
+		if err := e.w.WriteString({{keyname . | printf "%q"}}); err != nil {
 			return err
 		}
-		if err := e.enc.WriteByte(':'); err != nil {
+		if err := e.w.WriteByte(':'); err != nil {
 			return err
 		}
 
@@ -58,75 +58,75 @@ func (e *{{.Name.Name}}JSONEncoder) RawEncode(v *{{.Name.Name}}) error {
 
 			{{if isprimitivetype .}}
 				{{if istype . "string"}}
-					if err := e.enc.WriteString(v); err != nil {
+					if err := e.w.WriteString(v); err != nil {
 						return err
 					}
 				{{end}}
 				{{if istype . "int"}}
-					if err := e.enc.WriteInt(v); err != nil {
+					if err := e.w.WriteInt(v); err != nil {
 						return err
 					}
 				{{end}}
 				{{if istype . "int64"}}
-					if err := e.enc.WriteInt64(v); err != nil {
+					if err := e.w.WriteInt64(v); err != nil {
 						return err
 					}
 				{{end}}
 				{{if istype . "uint"}}
-					if err := e.enc.WriteUint(v); err != nil {
+					if err := e.w.WriteUint(v); err != nil {
 						return err
 					}
 				{{end}}
 				{{if istype . "uint64"}}
-					if err := e.enc.WriteUint64(v); err != nil {
+					if err := e.w.WriteUint64(v); err != nil {
 						return err
 					}
 				{{end}}
 				{{if istype . "float32"}}
-					if err := e.enc.WriteFloat32(v); err != nil {
+					if err := e.w.WriteFloat32(v); err != nil {
 						return err
 					}
 				{{end}}
 				{{if istype . "float64"}}
-					if err := e.enc.WriteFloat64(v); err != nil {
+					if err := e.w.WriteFloat64(v); err != nil {
 						return err
 					}
 				{{end}}
 				{{if istype . "bool"}}
-					if err := e.enc.WriteBool(v); err != nil {
+					if err := e.w.WriteBool(v); err != nil {
 						return err
 					}
 				{{end}}
 			{{end}}
 			{{if istype . "*"}}
-				if err := New{{subtype .}}JSONRawEncoder(e.enc).RawEncode(v); err != nil {
+				if err := New{{subtype .}}JSONRawEncoder(e.w).RawEncode(v); err != nil {
 					return err
 				}
 			{{end}}
 			{{if istype . "[]"}}
-				if err := e.enc.WriteByte('['); err != nil {
+				if err := e.w.WriteByte('['); err != nil {
 					return err
 				}
 
 				for index, v := range v {
 					if index > 0 {
-						if err := e.enc.WriteByte(','); err != nil {
+						if err := e.w.WriteByte(','); err != nil {
 							return err
 						}
 					}
-					if err := New{{subtype .}}JSONRawEncoder(e.enc).RawEncode(v); err != nil {
+					if err := New{{subtype .}}JSONRawEncoder(e.w).RawEncode(v); err != nil {
 						return err
 					}
 				}
 
-				if err := e.enc.WriteByte(']'); err != nil {
+				if err := e.w.WriteByte(']'); err != nil {
 					return err
 				}
 			{{end}}
 		}
 	{{end}}
 
-	if err := e.enc.WriteByte('}'); err != nil {
+	if err := e.w.WriteByte('}'); err != nil {
 		return err
 	}
 	return nil

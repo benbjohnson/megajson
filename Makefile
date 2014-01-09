@@ -1,3 +1,8 @@
+PKG=./...
+TEST=.
+BENCH=.
+TMPL=$(wildcard generator/**/*.tmpl)
+TMPLBIN=$(patsubst %,%.go,${TMPL})
 COVERPROFILE=/tmp/c.out
 
 default:
@@ -9,23 +14,25 @@ default:
 	@echo "    make fmt"
 	@echo
 
-bindata: generator/encoder_tmpl.go generator/decoder_tmpl.go
 
-generator/encoder_tmpl.go: generator/tmpl/encoder.tmpl
-	cat $< | go-bindata -f encoder_tmpl -p generator | gofmt > $@
+bindata: $(TMPLBIN)
+	echo $(TMPLBIN)
 
-generator/decoder_tmpl.go: generator/tmpl/decoder.tmpl
-	cat $< | go-bindata -f decoder_tmpl -p generator | gofmt > $@
+generator/encoder/encoder.tmpl.go: generator/encoder/encoder.tmpl
+	cat $< | go-bindata -func tmplsrc -pkg encoder | gofmt > $@
+
+generator/decoder/decoder.tmpl.go: generator/decoder/decoder.tmpl
+	cat $< | go-bindata -func tmplsrc -pkg decoder | gofmt > $@
 
 
 bench: benchpreq
-	go test -v -test.bench=. ./bench
+	go test -v -test.bench=$(BENCH) ./bench
 
 bench-cpuprofile: benchpreq
 	go test -v -test.bench=. -test.cpuprofile=test/cpu.out ./bench
 	go tool pprof test/cpu.out
 
-benchpreq:
+benchpreq: bindata
 	go run main.go -- bench/code.go
 
 cloc:
@@ -45,9 +52,9 @@ coverpreq:
 fmt:
 	go fmt ./...
 
-test:
-	go test -i ./...
-	go test -v ./...
+test: bindata
+	go test -i -test.run=$(TEST) $(PKG)
+	go test -v -test.run=$(TEST) $(PKG)
 
 
 .PHONY: assets test
