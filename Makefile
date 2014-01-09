@@ -57,6 +57,6 @@ test: bindata
 	go test -v -test.run=$(TEST) $(PKG)
 
 goveralls: bindata
-	goveralls -package=./... $COVERALLS_TOKEN
+	goveralls -package=./... $(COVERALLS_TOKEN)
 
 .PHONY: assets test
