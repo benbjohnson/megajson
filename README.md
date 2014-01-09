@@ -1,4 +1,4 @@
-# megajson
+# megajson [![Build Status](https://drone.io/github.com/benbjohnson/megajson/status.png)](https://drone.io/github.com/benbjohnson/megajson/latest) [![Coverage Status](https://coveralls.io/repos/benbjohnson/megajson/badge.png?branch=master)](https://coveralls.io/r/benbjohnson/megajson?branch=master)
 
 > High performance Go JSON encoder and decoder.<br/>
 
