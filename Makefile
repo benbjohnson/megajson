@@ -26,17 +26,17 @@ generator/decoder/decoder.tmpl.go: generator/decoder/decoder.tmpl
 
 
 bench: benchpreq
-	go test -v -test.bench=$(BENCH) ./bench
+	go test -v -test.bench=$(BENCH) ./.bench
 
 bench-cpuprofile: benchpreq
-	go test -v -test.bench=. -test.cpuprofile=test/cpu.out ./bench
+	go test -v -test.bench=. -test.cpuprofile=test/cpu.out ./.bench
 	go tool pprof test/cpu.out
 
 benchpreq: bindata
-	go run main.go -- bench/code.go
+	go run main.go -- .bench/code.go
 
 cloc:
-	cloc --not-match-f=_test.go --not-match-d=test --not-match-d=bench .
+	cloc --not-match-f=_test.go --not-match-d=test --not-match-d=.bench .
 
 cover: coverpreq fmt
 	go test -coverprofile=$(COVERPROFILE) $(PKG)
@@ -56,5 +56,7 @@ test: bindata
 	go test -i -test.run=$(TEST) $(PKG)
 	go test -v -test.run=$(TEST) $(PKG)
 
+goveralls: bindata
+	goveralls -package=./... $COVERALLS_TOKEN
 
 .PHONY: assets test
