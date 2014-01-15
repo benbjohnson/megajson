@@ -28,7 +28,7 @@ type generator struct {
 }
 
 func New() Generator {
-	return &generator{}
+	return &generator{decoder:decoder.NewGenerator(), encoder:encoder.NewGenerator()}
 }
 
 // Generate recursively iterates over a path and generates encoders and decoders.
