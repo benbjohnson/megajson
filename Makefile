@@ -28,9 +28,12 @@ generator/decoder/decoder.tmpl.go: generator/decoder/decoder.tmpl
 bench: benchpreq
 	go test -v -test.bench=$(BENCH) ./.bench
 
-bench-cpuprofile: benchpreq
-	go test -v -test.bench=. -test.cpuprofile=test/cpu.out ./.bench
-	go tool pprof test/cpu.out
+bench-cpu: benchpreq
+	cd .bench; \
+	rm ./.bench.test; \
+	go test -c; \
+	./.bench.test -test.v -test.bench=$(BENCH) -test.benchtime=30s -test.cpuprofile=cpu.prof; \
+	go tool pprof .bench.test cpu.prof
 
 benchpreq: bindata
 	go run main.go -- .bench/code.go

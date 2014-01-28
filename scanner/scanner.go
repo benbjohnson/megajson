@@ -31,7 +31,7 @@ type Scanner interface {
 type scanner struct {
 	r       io.Reader
 	c       rune
-	scratch [4096]byte
+	scratch [bufSize]byte
 	buf     [bufSize]byte
 	buflen  int
 	idx     int
