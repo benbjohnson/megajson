@@ -1,7 +1,7 @@
 package scanner
 
 const (
-	TSTRING = iota
+	TSTRING = iota + 1
 	TNUMBER
 	TTRUE
 	TFALSE
