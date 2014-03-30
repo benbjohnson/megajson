@@ -229,6 +229,8 @@ func (s *scanner) scanDigits(n *int) error {
 // scanString reads a quoted JSON string from the reader.
 func (s *scanner) scanString() (int, []byte, error) {
 	// TODO: Support large strings (e.g. >bufSize).
+	var overflow []byte
+
 	var n int
 	for {
 		if err := s.read(); err != nil {
@@ -301,9 +303,22 @@ func (s *scanner) scanString() (int, []byte, error) {
 			}
 
 		case '"':
-			return TSTRING, s.scratch[0:n], nil
+			if len(overflow) == 0 {
+				return TSTRING, s.scratch[0:n], nil
+			}
+			for _, b := range s.scratch[0:n] {
+				overflow = append(overflow, b)
+			}
+			return TSTRING, overflow, nil
+
 		default:
 			if s.c < utf8.RuneSelf {
+				if n == bufSize {
+					for _, b := range s.scratch[0:n] {
+						overflow = append(overflow, b)
+					}
+					n = 0
+				}
 				s.scratch[n] = byte(s.c)
 				n++
 			} else {
