@@ -92,6 +92,15 @@ func TestReadString(t *testing.T) {
 	assert.Equal(t, v, "foo")
 }
 
+// Ensures that strings largers than allocated buffer can be read.
+func TestReadHugeString(t *testing.T) {
+	var v string
+	huge := strings.Repeat("s", bufSize*3)
+	err := NewScanner(strings.NewReader(`"` + huge + `"`)).ReadString(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, v, huge)
+}
+
 // Ensures that a non-string value is read into a string field as blank.
 func TestReadNonStringAsString(t *testing.T) {
 	var v string
