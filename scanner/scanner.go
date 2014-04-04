@@ -306,17 +306,13 @@ func (s *scanner) scanString() (int, []byte, error) {
 			if len(overflow) == 0 {
 				return TSTRING, s.scratch[0:n], nil
 			}
-			for _, b := range s.scratch[0:n] {
-				overflow = append(overflow, b)
-			}
+			overflow = append(overflow, s.scratch[0:n]...)
 			return TSTRING, overflow, nil
 
 		default:
 			if s.c < utf8.RuneSelf {
 				if n == bufSize {
-					for _, b := range s.scratch[0:n] {
-						overflow = append(overflow, b)
-					}
+					overflow = append(overflow, s.scratch[0:n]...)
 					n = 0
 				}
 				s.scratch[n] = byte(s.c)
