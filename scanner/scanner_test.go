@@ -95,7 +95,7 @@ func TestReadString(t *testing.T) {
 // Ensures that strings largers than allocated buffer can be read.
 func TestReadHugeString(t *testing.T) {
 	var v string
-	huge := strings.Repeat("s", bufSize*2)
+	huge := strings.Repeat("s", bufSize*3)
 	err := NewScanner(strings.NewReader(`"` + huge + `"`)).ReadString(&v)
 	assert.NoError(t, err)
 	assert.Equal(t, v, huge)
