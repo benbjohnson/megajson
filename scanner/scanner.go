@@ -228,7 +228,6 @@ func (s *scanner) scanDigits(n *int) error {
 
 // scanString reads a quoted JSON string from the reader.
 func (s *scanner) scanString() (int, []byte, error) {
-	// TODO: Support large strings (e.g. >bufSize).
 	var overflow []byte
 
 	var n int
