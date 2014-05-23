@@ -26,6 +26,7 @@ type Scanner interface {
 	ReadFloat64(target *float64) error
 	ReadBool(target *bool) error
 	ReadMap(target *map[string]interface{}) error
+	ReadArray(target *[]interface{}) error
 }
 
 type scanner struct {
@@ -581,8 +582,12 @@ func (s *scanner) ReadMap(target *map[string]interface{}) error {
 			}
 			v[key] = m
 		case TLBRACKET:
-			// TODO: Read arrays.
-			panic("Not supported yet")
+			s.Unscan(tok, b)
+			var arr []interface{}
+			if err := s.ReadArray(&arr); err != nil {
+				return err
+			}
+			v[key] = arr
 		default:
 			return fmt.Errorf("Unexpected %s at %d: %s", TokenName(tok), s.Pos(), string(b))
 		}
@@ -590,5 +595,64 @@ func (s *scanner) ReadMap(target *map[string]interface{}) error {
 		index++
 	}
 
+	return nil
+}
+
+func (s *scanner) ReadArray(target *[]interface{}) error {
+	if tok, b, err := s.Scan(); err != nil {
+		return err
+	} else if tok != TLBRACKET {
+		return fmt.Errorf("Unexpected %s at %d: %s; expected '['", TokenName(tok), s.Pos(), string(b))
+	}
+
+	index := 0
+	for {
+		tok, b, err := s.Scan()
+		if err != nil {
+			return err
+		} else if tok == TRBRACKET {
+			return nil
+		} else if tok == TCOMMA {
+			if index == 0 {
+				return fmt.Errorf("Unexpected comma in array at %d", s.Pos())
+			}
+			if tok, b, err = s.Scan(); err != nil {
+				return err
+			}
+		}
+
+		var v interface{}
+		switch tok {
+		case TSTRING:
+			v = string(b)
+		case TNUMBER:
+			v, _ = strconv.ParseFloat(string(b), 64)
+		case TTRUE:
+			v = true
+		case TFALSE:
+			v = false
+		case TNULL:
+			v = nil
+		case TLBRACE:
+			s.Unscan(tok, b)
+			m := make(map[string]interface{})
+			if err := s.ReadMap(&m); err != nil {
+				return err
+			}
+			v = m
+		case TLBRACKET:
+			s.Unscan(tok, b)
+			var arr []interface{}
+			if err := s.ReadArray(&arr); err != nil {
+				return err
+			}
+			v = arr
+		default:
+			return fmt.Errorf("Unexpected %s at %d: %s", TokenName(tok), s.Pos(), string(b))
+		}
+		*target = append(*target, v)
+
+		index++
+	}
 	return nil
 }
