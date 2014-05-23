@@ -218,6 +218,17 @@ func TestReadMap(t *testing.T) {
 	assert.Equal(t, nested["xxx"], "yyy")
 }
 
+// Ensures that a map with arrays can be read into a field.
+func TestReadMapWithArray(t *testing.T) {
+	var v map[string]interface{}
+	err := NewScanner(strings.NewReader(`{"foo":["bar", 42]}`)).ReadMap(&v)
+	assert.NoError(t, err)
+	arr := v["foo"].([]interface{})
+	t.Logf("got=%#v", v)
+	assert.Equal(t, "bar", arr[0].(string))
+	assert.Equal(t, 42.0, arr[1].(float64))
+}
+
 func BenchmarkScanNumber(b *testing.B) {
 	withBuffer(b, "100", func(buf []byte) {
 		s := NewScanner(bytes.NewBuffer(buf))
