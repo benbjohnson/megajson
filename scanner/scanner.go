@@ -190,7 +190,8 @@ func (s *scanner) scanNumber() (int, []byte, error) {
 		return 0, nil, err
 	} else if s.c != '.' {
 		s.unread()
-		return TNUMBER, s.scratch[0:n], nil
+		//  We can't just return.  The number could be 1e-1
+		return s.scanScientific(n)
 	}
 	s.scratch[n] = '.'
 	n++
@@ -203,6 +204,47 @@ func (s *scanner) scanNumber() (int, []byte, error) {
 	if err := s.scanDigits(&n); err == io.EOF {
 		return TNUMBER, s.scratch[0:n], nil
 	} else if err != nil {
+		return 0, nil, err
+	}
+	n++
+
+	return s.scanScientific(n)
+}
+
+func (s *scanner) scanScientific(n int) (int, []byte, error) {
+	// Read scientific
+	if err := s.read(); err == io.EOF {
+		return TNUMBER, s.scratch[0:n], nil
+	} else if err != nil {
+		return 0, nil, err
+	} else if s.c != 'e' && s.c != 'E' {
+		s.unread()
+		return TNUMBER, s.scratch[0:n], nil
+	}
+	s.scratch[n] = 'e'
+	n++
+
+	// Read sign
+	if err := s.read(); err == io.EOF {
+		return TNUMBER, s.scratch[0:n], nil
+	} else if err != nil {
+		return 0, nil, err
+	} else if s.c != '-' && s.c != '+' {
+		s.unread()
+	} else if s.c == '-' { // don't bother adding the +
+		s.scratch[n] = '-'
+		n++
+	}
+
+	if err := s.read(); err != nil {
+		return 0, nil, err
+	}
+
+	// Read whole number.
+	if err := s.scanDigits(&n); err == io.EOF {
+		return TNUMBER, s.scratch[0:n], nil
+	} else if err != nil {
+		fmt.Println("Bad?")
 		return 0, nil, err
 	}
 	n++

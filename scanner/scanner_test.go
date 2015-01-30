@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"strconv"
 )
 
 // Ensures that a positive number can be scanned.
@@ -31,6 +32,31 @@ func TestScanFloat(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, tok, TNUMBER)
 	assert.Equal(t, string(b), "120.12931")
+}
+
+// Ensures that a fractional number in scientific notation can be scanned.
+func TestScanFloatScientific(t *testing.T) {
+	tok, b, err := NewScanner(strings.NewReader("10.1e01")).Scan()
+	assert.NoError(t, err)
+	assert.Equal(t, tok, TNUMBER)
+	assert.Equal(t, string(b), "10.1e01")
+
+	tok, b, err = NewScanner(strings.NewReader("10.1e-01")).Scan()
+	assert.NoError(t, err)
+	assert.Equal(t, tok, TNUMBER)
+	assert.Equal(t, string(b), "10.1e-01")
+
+	tok, b, err = NewScanner(strings.NewReader("10.1e+01")).Scan()
+	assert.NoError(t, err)
+	assert.Equal(t, tok, TNUMBER)
+	assert.Equal(t, string(b), "10.1e01")
+	f, _ := strconv.ParseFloat(string(b), 64)
+	assert.Equal(t, 10.1e+01, f)
+
+	tok, b, err = NewScanner(strings.NewReader("-1e1")).Scan()
+	assert.NoError(t, err)
+	assert.Equal(t, tok, TNUMBER)
+	assert.Equal(t, string(b), "-1e1")
 }
 
 // Ensures that a quoted string can be scanned.
