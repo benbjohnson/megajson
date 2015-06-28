@@ -1,8 +1,8 @@
-# megajson [![Build Status](https://drone.io/github.com/benbjohnson/megajson/status.png)](https://drone.io/github.com/benbjohnson/megajson/latest) [![Coverage Status](https://coveralls.io/repos/benbjohnson/megajson/badge.png?branch=master)](https://coveralls.io/r/benbjohnson/megajson?branch=master)
+# megajson ![status](https://img.shields.io/badge/status-unmaintained-red.svg)
 
 > High performance Go JSON encoder and decoder.<br/>
 
-> *Notice: This tool is alpha. Please report bugs to the GitHub page.*
+> *Notice: This tool is unmaintained. Please use [ffjson](https://github.com/pquerna/ffjson) instead.*
 
 ## Overview
 
